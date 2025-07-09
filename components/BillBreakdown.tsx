@@ -4,7 +4,6 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Badge } from './ui/badge';
-import { Separator } from './ui/separator';
 import { Receipt, Zap, Calculator } from 'lucide-react';
 import type { CalculationResult } from '../types/calculator';
 
