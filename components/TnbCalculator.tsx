@@ -28,8 +28,6 @@ export default function TnbCalculator() {
         afaSenPerKWh: 0.0, // Default AFA rate
     });
 
-    const [showCalculation, setShowCalculation] = useState(false);
-
     const result = useMemo(() => {
         if (inputs.monthlyUsageKWh > 0) {
             return calculateElectricityBill(inputs);
@@ -225,14 +223,6 @@ export default function TnbCalculator() {
                                 </Alert>
                             </div>
                         )}
-
-                        <Button
-                            onClick={() => setShowCalculation(true)}
-                            className="w-full"
-                            disabled={!inputs.monthlyUsageKWh || inputs.monthlyUsageKWh <= 0}
-                        >
-                            Calculate Bill
-                        </Button>
                     </CardContent>
                 </Card>
 
@@ -337,7 +327,7 @@ export default function TnbCalculator() {
             </div>
 
             {/* Detailed Calculation */}
-            {result && showCalculation && (
+            {result && (
                 <Card>
                     <CardHeader>
                         <CardTitle>Detailed Calculation</CardTitle>
