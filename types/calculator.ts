@@ -4,6 +4,11 @@ export interface TariffRates {
     timeOfUseTariff: TimeOfUseTariff;
 }
 
+export interface EEITier {
+    usageKWhRange: string;
+    rateSenPerKWh: number;
+}
+
 export interface GeneralDomesticTariff {
     description: string;
     components: {
@@ -39,6 +44,12 @@ export interface GeneralDomesticTariff {
             rebateSenPerKWh: string;
             condition: string;
         };
+    };
+    energyEfficiencyIncentive: {
+        description: string;
+        rebateSenPerKWh: string;
+        condition: string;
+        tiers: EEITier[];
     };
 }
 

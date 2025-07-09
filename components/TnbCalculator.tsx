@@ -15,6 +15,7 @@ import { Separator } from './ui/separator';
 import { Info, Calculator, Zap, Sun, Clock } from 'lucide-react';
 import { calculateElectricityBill } from '../utils/calculator';
 import type { CalculatorInputs } from '../types/calculator';
+import tariffData from '../data/db.json';
 
 export default function TnbCalculator() {
     const [inputs, setInputs] = useState<CalculatorInputs>({
@@ -349,8 +350,26 @@ export default function TnbCalculator() {
                                                 <div><strong>Network Charge:</strong> 12.85 sen/kWh</div>
                                                 <div><strong>Retail Charge:</strong> RM 10.00/month</div>
                                                 <div className="text-xs text-gray-600">(Waived if usage ≤ 600 kWh)</div>
-                                                <div><strong>EEI Rebate:</strong> 25 sen/kWh</div>
-                                                <div className="text-xs text-gray-600">(For usage ≤ 1000 kWh)</div>
+                                                <div><strong>EEI Rebate:</strong> Tiered rates</div>
+                                                <div className="text-xs text-gray-600">(1-200 kWh: 25 sen/kWh, decreasing by tier up to 1000 kWh)</div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {inputs.tariffType === 'new' && (
+                                        <div className="p-4 border rounded-lg bg-green-50">
+                                            <h4 className="font-semibold mb-2">Energy Efficiency Incentive (EEI) Tiers</h4>
+                                            <div className="space-y-1 text-xs">
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <div><strong>Usage Range</strong></div>
+                                                    <div><strong>Rebate Rate</strong></div>
+                                                </div>
+                                                {tariffData.tnbTariffRates.generalDomesticTariff.energyEfficiencyIncentive.tiers.map((tier, index) => (
+                                                    <div key={index} className="grid grid-cols-2 gap-2">
+                                                        <div>{tier.usageKWhRange} kWh</div>
+                                                        <div>{Math.abs(tier.rateSenPerKWh)} sen/kWh</div>
+                                                    </div>
+                                                ))}
                                             </div>
                                         </div>
                                     )}

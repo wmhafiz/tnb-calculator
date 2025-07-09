@@ -36,6 +36,81 @@
                     "rebateSenPerKWh": "Up to 25 sen/kWh",
                     "condition": "For domestic customers using 1,000 kWh or less per month."
                 }
+            },
+            "energyEfficiencyIncentive": {
+                "description": "Rebate to encourage energy efficiency.",
+                "rebateSenPerKWh": "Varies by tier, up to 25 sen/kWh",
+                "condition": "For domestic customers using 1,000 kWh or less per month.",
+                "tiers": [
+                    {
+                        "usageKWhRange": "1 - 200",
+                        "rateSenPerKWh": -25.0
+                    },
+                    {
+                        "usageKWhRange": "201 - 250",
+                        "rateSenPerKWh": -24.5
+                    },
+                    {
+                        "usageKWhRange": "251 - 300",
+                        "rateSenPerKWh": -22.5
+                    },
+                    {
+                        "usageKWhRange": "301 - 350",
+                        "rateSenPerKWh": -21.0
+                    },
+                    {
+                        "usageKWhRange": "351 - 400",
+                        "rateSenPerKWh": -17.0
+                    },
+                    {
+                        "usageKWhRange": "401 - 450",
+                        "rateSenPerKWh": -14.5
+                    },
+                    {
+                        "usageKWhRange": "451 - 500",
+                        "rateSenPerKWh": -12.0
+                    },
+                    {
+                        "usageKWhRange": "501 - 550",
+                        "rateSenPerKWh": -10.5
+                    },
+                    {
+                        "usageKWhRange": "551 - 600",
+                        "rateSenPerKWh": -9.0
+                    },
+                    {
+                        "usageKWhRange": "601 - 650",
+                        "rateSenPerKWh": -7.5
+                    },
+                    {
+                        "usageKWhRange": "651 - 700",
+                        "rateSenPerKWh": -5.5
+                    },
+                    {
+                        "usageKWhRange": "701 - 750",
+                        "rateSenPerKWh": -4.5
+                    },
+                    {
+                        "usageKWhRange": "751 - 800",
+                        "rateSenPerKWh": -4.0
+                    },
+                    {
+                        "usageKWhRange": "801 - 850",
+                        "rateSenPerKWh": -2.5
+                    },
+                    {
+                        "usageKWhRange": "851 - 900",
+                        "rateSenPerKWh": -1.0
+                    },
+                    {
+                        "usageKWhRange": "901 - 1000",
+                        "rateSenPerKWh": -0.5
+                    },
+                    {
+                        "usageKWhRange": "> 1000",
+                        "rateSenPerKWh": 0.0
+                    }
+                ]
             }
         },
         "timeOfUseTariff": {

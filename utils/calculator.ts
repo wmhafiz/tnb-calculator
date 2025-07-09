@@ -15,6 +15,66 @@ const OLD_TARIFF_RATES: OldTariffRates = {
     serviceTaxRate: 0.08 // 8%
 };
 
+/**
+ * Parse EEI tier range string to extract min and max kWh values
+ * @param rangeString String like "1 - 200", "201 - 250", "> 1000"
+ * @returns Object with minKWh and maxKWh values
+ */
+function parseEEITierRange(rangeString: string): { minKWh: number; maxKWh: number } {
+    if (rangeString.includes('> 1000')) {
+        return { minKWh: 1001, maxKWh: Infinity };
+    }
+
+    const parts = rangeString.split(' - ');
+    if (parts.length === 2) {
+        return {
+            minKWh: parseInt(parts[0].trim()),
+            maxKWh: parseInt(parts[1].trim())
+        };
+    }
+
+    // Fallback for unexpected format
+    return { minKWh: 0, maxKWh: 0 };
+}
+
+/**
+ * Calculate tiered Energy Efficiency Incentive (EEI) rebate using data from db.json
+ * @param netConsumption Net consumption in kWh (total usage - solar excess)
+ * @returns Object containing rebate amount and breakdown details
+ */
+function calculateTieredEEI(netConsumption: number): { rebate: number; breakdown: string[]; effectiveRate: number } {
+    const breakdown: string[] = [];
+    let totalRebate = 0;
+
+    if (netConsumption <= 0) {
+        return { rebate: 0, breakdown: ['No EEI rebate (net consumption ≤ 0 kWh)'], effectiveRate: 0 };
+    }
+
+    if (netConsumption > 1000) {
+        return { rebate: 0, breakdown: ['RM 0.00 (Not applicable for net consumption > 1000 kWh)'], effectiveRate: 0 };
+    }
+
+    // Get EEI tiers from tariff data
+    const eeiTiers = tariffData.tnbTariffRates.generalDomesticTariff.energyEfficiencyIncentive.tiers;
+
+    // Find the tier that contains the total consumption
+    const applicableTier = eeiTiers.find(tier => {
+        const { minKWh, maxKWh } = parseEEITierRange(tier.usageKWhRange);
+        return netConsumption >= minKWh && netConsumption <= maxKWh;
+    });
+
+    if (applicableTier) {
+        const { minKWh, maxKWh } = parseEEITierRange(applicableTier.usageKWhRange);
+        totalRebate = netConsumption * Math.abs(applicableTier.rateSenPerKWh) / 100;
+        breakdown.push(`${netConsumption} kWh × ${Math.abs(applicableTier.rateSenPerKWh)} sen/kWh = RM ${totalRebate.toFixed(2)} (Rebate)`);
+        breakdown.push(`EEI Tier: ${minKWh}-${maxKWh === Infinity ? '1000+' : maxKWh} kWh @ ${Math.abs(applicableTier.rateSenPerKWh)} sen/kWh`);
+    }
+
+    const effectiveRate = netConsumption > 0 ? Math.abs(applicableTier?.rateSenPerKWh || 0) : 0;
+
+    return { rebate: totalRebate, breakdown, effectiveRate };
+}
+
 export function calculateOldTariff(usageKWh: number, solarExcessKWh: number = 0): { amount: number; breakdown: string[]; solarSavings: number } {
     const breakdown: string[] = [];
     let totalAmount = 0;
@@ -277,15 +337,15 @@ export function calculateNewGeneralTariff(
         breakdown.push(`RM ${retailCharge.toFixed(2)}`);
     }
 
-    // Apply EEI rebate
-    const eeiRebate = netConsumption <= 1000 ? Math.min(netConsumption, 1000) * 0.25 : 0;
+    // Apply EEI rebate using tiered structure
+    const eeiCalculation = calculateTieredEEI(netConsumption);
+    const eeiRebate = eeiCalculation.rebate;
 
     breakdown.push('');
     breakdown.push(`ENERGY EFFICIENCY INCENTIVE (EEI):`);
-    if (netConsumption <= 1000) {
-        breakdown.push(`${Math.min(netConsumption, 1000)} kWh × 25 sen/kWh = RM ${eeiRebate.toFixed(2)} (Rebate)`);
-    } else {
-        breakdown.push(`RM 0.00 (Not applicable for net consumption > 1000 kWh)`);
+    breakdown.push(`Net consumption: ${netConsumption} kWh`);
+    for (const line of eeiCalculation.breakdown) {
+        breakdown.push(line);
     }
 
     // AFA (currently RM 0.00)
