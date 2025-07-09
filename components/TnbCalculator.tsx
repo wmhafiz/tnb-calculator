@@ -218,11 +218,11 @@ export default function TnbCalculator() {
                                 </div>
 
                                 {/* Solar Savings */}
-                                {result.solarSavings && result.solarSavings > 0 && (
+                                {(result.solarSavings ?? 0) > 0 && (
                                     <Alert>
                                         <Sun className="h-4 w-4" />
                                         <AlertDescription>
-                                            <strong>Solar Savings:</strong> {formatCurrency(result.solarSavings)} saved this month
+                                            <strong>Solar Savings:</strong> {formatCurrency(result.solarSavings ?? 0)} saved this month
                                         </AlertDescription>
                                     </Alert>
                                 )}
