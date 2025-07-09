@@ -69,9 +69,9 @@ export default function TnbCalculator() {
                 </p>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="flex flex-col lg:flex-row gap-6">
                 {/* Input Panel */}
-                <Card>
+                <Card className="flex-2">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <Zap className="h-5 w-5" />
@@ -233,117 +233,63 @@ export default function TnbCalculator() {
                     </CardContent>
                 </Card>
 
-                {/* Results Panel */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Bill Estimation</CardTitle>
-                        <CardDescription>
-                            {result ? 'Your estimated electricity bill' : 'Enter usage details to see calculation'}
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        {error && (
-                            <Alert className="mb-4">
-                                <Info className="h-4 w-4" />
-                                <AlertDescription>
-                                    <strong>Error:</strong> {error}
-                                </AlertDescription>
-                            </Alert>
-                        )}
-                        {isCalculating ? (
-                            <div className="text-center py-12 text-gray-500">
-                                <Calculator className="h-12 w-12 mx-auto mb-4 opacity-50 animate-spin" />
-                                <p>Calculating...</p>
-                            </div>
-                        ) : result ? (
-                            <div className="space-y-6">
-                                {/* Total Amount */}
-                                <div className="text-center p-6 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg">
-                                    <div className="text-3xl font-bold text-blue-600">
-                                        {formatCurrency(result.breakdown.totalAmount)}
-                                    </div>
-                                    <div className="text-sm text-gray-600 mt-1">
-                                        Estimated Monthly Bill
-                                    </div>
-                                </div>
+                <div className="flex-3 flex flex-col gap-6">
+                    {error && (
+                        <Alert className="mb-4">
+                            <Info className="h-4 w-4" />
+                            <AlertDescription>
+                                <strong>Error:</strong> {error}
+                            </AlertDescription>
+                        </Alert>
+                    )}
+                    {isCalculating ? (
+                        <div className="text-center py-12 text-gray-500">
+                            <Calculator className="h-12 w-12 mx-auto mb-4 opacity-50 animate-spin" />
+                            <p>Calculating...</p>
+                        </div>
+                    ) : result ? (
+                        <div className="space-y-6">
+                            <BillBreakdown />
 
-                                {/* Solar Savings */}
-                                {(result.solarSavings ?? 0) > 0 && (
-                                    <Alert>
-                                        <Sun className="h-4 w-4" />
-                                        <AlertDescription>
-                                            <strong>Solar Savings:</strong> {formatCurrency(result.solarSavings ?? 0)} saved this month
-                                        </AlertDescription>
-                                    </Alert>
-                                )}
-
-                                {/* ToU Comparison */}
-                                {result.touComparison && (
-                                    <div className="p-4 border rounded-lg bg-blue-50">
-                                        <h4 className="font-semibold mb-2">Time of Use Comparison</h4>
-                                        <div className="grid grid-cols-2 gap-4 text-sm">
-                                            <div>
-                                                <div className="text-gray-600">General Tariff</div>
-                                                <div className="font-semibold">{formatCurrency(result.touComparison.generalTariffAmount)}</div>
-                                            </div>
-                                            <div>
-                                                <div className="text-gray-600">ToU Tariff</div>
-                                                <div className="font-semibold">{formatCurrency(result.touComparison.touAmount)}</div>
-                                            </div>
+                            {/* ToU Comparison */}
+                            {result.touComparison && (
+                                <div className="p-4 border rounded-lg bg-blue-50">
+                                    <h4 className="font-semibold mb-2">Time of Use Comparison</h4>
+                                    <div className="grid grid-cols-2 gap-4 text-sm">
+                                        <div>
+                                            <div className="text-gray-600">General Tariff</div>
+                                            <div className="font-semibold">{formatCurrency(result.touComparison.generalTariffAmount)}</div>
                                         </div>
-                                        <div className="mt-3 pt-3 border-t">
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-sm">Potential Savings:</span>
-                                                <div className="text-right">
-                                                    <div className={`font-semibold ${result.touComparison.savings > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                                        {result.touComparison.savings > 0 ? '-' : '+'}{formatCurrency(Math.abs(result.touComparison.savings))}
-                                                    </div>
-                                                    <div className={`text-xs ${result.touComparison.savings > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                                        {formatPercentage(result.touComparison.savingsPercentage)}
-                                                    </div>
+                                        <div>
+                                            <div className="text-gray-600">ToU Tariff</div>
+                                            <div className="font-semibold">{formatCurrency(result.touComparison.touAmount)}</div>
+                                        </div>
+                                    </div>
+                                    <div className="mt-3 pt-3 border-t">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-sm">Potential Savings:</span>
+                                            <div className="text-right">
+                                                <div className={`font-semibold ${result.touComparison.savings > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                    {result.touComparison.savings > 0 ? '-' : '+'}{formatCurrency(Math.abs(result.touComparison.savings))}
+                                                </div>
+                                                <div className={`text-xs ${result.touComparison.savings > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                    {formatPercentage(result.touComparison.savingsPercentage)}
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                )}
-
-                                {/* Quick Summary */}
-                                <div className="space-y-2">
-                                    <h4 className="font-semibold">Quick Summary</h4>
-                                    <div className="grid grid-cols-2 gap-2 text-sm">
-                                        <div className="flex justify-between">
-                                            <span>Usage:</span>
-                                            <span>{inputs.monthlyUsageKWh} kWh</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span>Tariff:</span>
-                                            <Badge variant={inputs.tariffType === 'new' ? 'default' : 'secondary'}>
-                                                {inputs.tariffType === 'new' ? 'New' : 'Old'}
-                                            </Badge>
-                                        </div>
-                                        {inputs.enableToU && (
-                                            <div className="flex justify-between">
-                                                <span>ToU:</span>
-                                                <Badge variant="outline">Enabled</Badge>
-                                            </div>
-                                        )}
-                                        {inputs.enableSolar && inputs.solarExcessKWh > 0 && (
-                                            <div className="flex justify-between">
-                                                <span>Solar:</span>
-                                                <Badge variant="outline">{inputs.solarExcessKWh} kWh</Badge>
-                                            </div>
-                                        )}
-                                    </div>
                                 </div>
-                            </div>
-                        ) : (
-                            <div className="text-center py-12 text-gray-500">
-                                <Calculator className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                                <p>Enter your monthly kWh usage to see the calculation</p>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
+                            )}
+
+                        </div>
+                    ) : (
+                        <div className="text-center py-12 text-gray-500">
+                            <Calculator className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                            <p>Enter your monthly kWh usage to see the calculation</p>
+                        </div>
+                    )}
+
+                </div>
             </div>
 
             {/* Detailed Calculation */}
@@ -356,16 +302,11 @@ export default function TnbCalculator() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <Tabs defaultValue="visual" className="w-full">
-                            <TabsList className="grid w-full grid-cols-3">
-                                <TabsTrigger value="visual">Visual Breakdown</TabsTrigger>
+                        <Tabs defaultValue="tariff-info" className="w-full">
+                            <TabsList className="grid w-full grid-cols-2">
                                 <TabsTrigger value="breakdown">Calculation Breakdown</TabsTrigger>
                                 <TabsTrigger value="tariff-info">Tariff Information</TabsTrigger>
                             </TabsList>
-
-                            <TabsContent value="visual" className="space-y-4">
-                                <BillBreakdown />
-                            </TabsContent>
 
                             <TabsContent value="breakdown" className="space-y-4">
                                 <div className="bg-gray-50 p-4 rounded-lg">
@@ -376,7 +317,7 @@ export default function TnbCalculator() {
                             </TabsContent>
 
                             <TabsContent value="tariff-info" className="space-y-4">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     {inputs.tariffType === 'old' && (
                                         <div className="p-4 border rounded-lg">
                                             <h4 className="font-semibold mb-2">Old Tariff Structure</h4>

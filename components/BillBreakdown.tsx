@@ -235,7 +235,7 @@ export default function BillBreakdown() {
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <Receipt className="h-5 w-5" />
-                    Bill Breakdown
+                    Estimated Bill Breakdown
                 </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
@@ -295,7 +295,7 @@ export default function BillBreakdown() {
 
                 {/* Additional Information */}
                 <div className="p-4 bg-gray-50 border-t">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                         <div className="flex items-center gap-2">
                             <Zap className="h-4 w-4 text-blue-600" />
                             <span className="font-medium">Usage:</span>
@@ -308,12 +308,6 @@ export default function BillBreakdown() {
                                 {inputs.tariffType === 'new' ? 'New General Domestic' : 'Old Tariff'}
                             </Badge>
                         </div>
-                        {inputs.enableToU && (
-                            <div className="flex items-center gap-2">
-                                <span className="font-medium">Time of Use:</span>
-                                <Badge variant="outline">Enabled</Badge>
-                            </div>
-                        )}
                         {inputs.enableSolar && inputs.solarExcessKWh > 0 && (
                             <div className="flex items-center gap-2">
                                 <Sun className="h-4 w-4 text-green-600" />
@@ -321,11 +315,12 @@ export default function BillBreakdown() {
                                 <Badge variant="outline" className="text-green-600 border-green-600">
                                     {inputs.solarExcessKWh} kWh excess
                                 </Badge>
-                                {solarSavings && solarSavings > 0 && (
-                                    <span className="text-green-600 font-medium">
-                                        -RM {formatCurrency(solarSavings)}
-                                    </span>
-                                )}
+                            </div>
+                        )}
+                        {inputs.enableToU && (
+                            <div className="flex items-center gap-2">
+                                <span className="font-medium">Time of Use:</span>
+                                <Badge variant="outline">Enabled</Badge>
                             </div>
                         )}
                     </div>
