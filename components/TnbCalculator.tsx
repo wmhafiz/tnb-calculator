@@ -25,6 +25,7 @@ export default function TnbCalculator() {
         touPeakPercentage: 30,
         enableSolar: false,
         solarExcessKWh: 0,
+        afaSenPerKWh: 0.0, // Default AFA rate
     });
 
     const [showCalculation, setShowCalculation] = useState(false);
@@ -186,6 +187,44 @@ export default function TnbCalculator() {
                                 </div>
                             )}
                         </div>
+
+                        {/* AFA Adjustment - Only for New Tariff */}
+                        {inputs.tariffType === 'new' && (
+                            <div className="space-y-4 p-4 border rounded-lg bg-orange-50">
+                                <div className="flex items-center gap-2">
+                                    <Zap className="h-4 w-4 text-orange-600" />
+                                    <Label>Automatic Fuel Adjustment (AFA): {inputs.afaSenPerKWh > 0 ? '+' : ''}{inputs.afaSenPerKWh.toFixed(1)} sen/kWh</Label>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Slider
+                                        value={[inputs.afaSenPerKWh]}
+                                        onValueChange={(value) => handleInputChange('afaSenPerKWh', value[0])}
+                                        max={3}
+                                        min={-3}
+                                        step={0.1}
+                                        className="w-full"
+                                    />
+                                    <div className="flex justify-between text-xs text-gray-600">
+                                        <span>-3.0</span>
+                                        <span>-2.0</span>
+                                        <span>-1.0</span>
+                                        <span>0.0</span>
+                                        <span>+1.0</span>
+                                        <span>+2.0</span>
+                                        <span>+3.0</span>
+                                    </div>
+                                </div>
+
+                                <Alert>
+                                    <Info className="h-4 w-4" />
+                                    <AlertDescription>
+                                        AFA is a variable mechanism that adjusts based on fuel costs.
+                                        Current rate is typically around 0.00 sen/kWh but can fluctuate.
+                                    </AlertDescription>
+                                </Alert>
+                            </div>
+                        )}
 
                         <Button
                             onClick={() => setShowCalculation(true)}

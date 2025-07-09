@@ -218,7 +218,8 @@ export function calculateNewGeneralTariff(
     usageKWh: number,
     solarExcessKWh: number = 0,
     isTou: boolean = false,
-    touPeakPercentage: number = 50
+    touPeakPercentage: number = 50,
+    afaSenPerKWh: number = 0
 ): { amount: number; breakdown: string[]; solarSavings: number } {
     const breakdown: string[] = [];
     const { generalDomesticTariff, timeOfUseTariff } = tariffData.tnbTariffRates;
@@ -348,11 +349,11 @@ export function calculateNewGeneralTariff(
         breakdown.push(line);
     }
 
-    // AFA (currently RM 0.00)
-    const afa = 0;
+    // AFA calculation
+    const afa = netConsumption * afaSenPerKWh / 100;
     breakdown.push('');
     breakdown.push(`AUTOMATIC FUEL ADJUSTMENT (AFA):`);
-    breakdown.push(`RM ${afa.toFixed(2)} (Currently RM 0.00 for July 2025)`);
+    breakdown.push(`${netConsumption} kWh × ${afaSenPerKWh > 0 ? '+' : ''}${afaSenPerKWh.toFixed(1)} sen/kWh = RM ${afa.toFixed(2)}`);
 
     // Calculate subtotal before KWTBB and SST
     const subtotalBeforeKWTBBSST = subtotal + retailCharge + afa - eeiRebate;
@@ -406,7 +407,7 @@ export function calculateNewGeneralTariff(
 }
 
 export function calculateElectricityBill(inputs: CalculatorInputs): CalculationResult {
-    const { monthlyUsageKWh, tariffType, enableToU, touPeakPercentage, enableSolar, solarExcessKWh } = inputs;
+    const { monthlyUsageKWh, tariffType, enableToU, touPeakPercentage, enableSolar, solarExcessKWh, afaSenPerKWh } = inputs;
 
     let result: { amount: number; breakdown: string[]; solarSavings: number };
     let touComparison;
@@ -415,10 +416,10 @@ export function calculateElectricityBill(inputs: CalculatorInputs): CalculationR
         result = calculateOldTariff(monthlyUsageKWh, enableSolar ? solarExcessKWh : 0);
     } else {
         if (enableToU) {
-            result = calculateNewGeneralTariff(monthlyUsageKWh, enableSolar ? solarExcessKWh : 0, true, touPeakPercentage);
+            result = calculateNewGeneralTariff(monthlyUsageKWh, enableSolar ? solarExcessKWh : 0, true, touPeakPercentage, afaSenPerKWh);
 
             // Calculate comparison with general tariff
-            const generalResult = calculateNewGeneralTariff(monthlyUsageKWh, enableSolar ? solarExcessKWh : 0, false);
+            const generalResult = calculateNewGeneralTariff(monthlyUsageKWh, enableSolar ? solarExcessKWh : 0, false, 50, afaSenPerKWh);
             const savings = generalResult.amount - result.amount;
             const savingsPercentage = (savings / generalResult.amount) * 100;
 
@@ -429,7 +430,7 @@ export function calculateElectricityBill(inputs: CalculatorInputs): CalculationR
                 savingsPercentage
             };
         } else {
-            result = calculateNewGeneralTariff(monthlyUsageKWh, enableSolar ? solarExcessKWh : 0, false);
+            result = calculateNewGeneralTariff(monthlyUsageKWh, enableSolar ? solarExcessKWh : 0, false, 50, afaSenPerKWh);
         }
     }
 

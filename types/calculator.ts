@@ -92,6 +92,7 @@ export interface CalculatorInputs {
     touPeakPercentage: number;
     enableSolar: boolean;
     solarExcessKWh: number;
+    afaSenPerKWh: number; // AFA rate in sen/kWh for new tariff
 }
 
 export interface BillBreakdown {
