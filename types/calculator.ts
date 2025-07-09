@@ -101,8 +101,10 @@ export interface BillBreakdown {
     retailCharge: number;
     automaticFuelAdjustment: number;
     energyEfficiencyIncentive: number;
-    renewableEnergyFund?: number;
-    serviceTax?: number;
+    renewableEnergyFund?: number; // Old tariff
+    serviceTax?: number; // Old tariff
+    kwtbb?: number; // New tariff - Kumpulan Wang Tenaga Boleh Baharu
+    sst?: number; // New tariff - Service Tax
     totalAmount: number;
 }
 

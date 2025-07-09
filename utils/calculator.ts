@@ -354,10 +354,11 @@ export function calculateNewGeneralTariff(
     breakdown.push(`AUTOMATIC FUEL ADJUSTMENT (AFA):`);
     breakdown.push(`RM ${afa.toFixed(2)} (Currently RM 0.00 for July 2025)`);
 
-    const totalAmount = subtotal + retailCharge + afa - eeiRebate;
+    // Calculate subtotal before KWTBB and SST
+    const subtotalBeforeKWTBBSST = subtotal + retailCharge + afa - eeiRebate;
 
     breakdown.push('');
-    breakdown.push(`TOTAL CALCULATION:`);
+    breakdown.push(`SUBTOTAL (before KWTBB & SST):`);
     breakdown.push(`Generation Charge: RM ${generationCharge.toFixed(2)}`);
     breakdown.push(`Capacity Charge: RM ${capacityCharge.toFixed(2)}`);
     breakdown.push(`Network Charge: RM ${networkCharge.toFixed(2)}`);
@@ -367,6 +368,37 @@ export function calculateNewGeneralTariff(
     breakdown.push(`Retail Charge: RM ${retailCharge.toFixed(2)}`);
     breakdown.push(`AFA: RM ${afa.toFixed(2)}`);
     breakdown.push(`Less EEI Rebate: RM ${eeiRebate.toFixed(2)}`);
+    breakdown.push(`Subtotal: RM ${subtotalBeforeKWTBBSST.toFixed(2)}`);
+
+    // Calculate KWTBB (Renewable Energy Fund) - 1.6% of subtotal
+    const kwtbb = subtotalBeforeKWTBBSST * 0.016;
+    breakdown.push('');
+    breakdown.push(`KUMPULAN WANG TENAGA BOLEH BAHARU (KWTBB):`);
+    breakdown.push(`1.6% of RM ${subtotalBeforeKWTBBSST.toFixed(2)} = RM ${kwtbb.toFixed(2)}`);
+
+    // Calculate SST (Service Tax) - 8% on (usage - 600) × generation rate if usage > 600
+    let sst = 0;
+    if (netConsumption > 600) {
+        const taxableUsage = netConsumption - 600;
+        const generationRate = generalDomesticTariff.components.generationCharge.tier1.rateSenPerKWh;
+        sst = (taxableUsage * generationRate / 100) * 0.08;
+        breakdown.push('');
+        breakdown.push(`SERVICE TAX (SST):`);
+        breakdown.push(`8% × (${netConsumption} kWh - 600 kWh) × ${generationRate} sen/kWh`);
+        breakdown.push(`8% × ${taxableUsage} kWh × ${generationRate} sen/kWh = RM ${sst.toFixed(2)}`);
+    } else {
+        breakdown.push('');
+        breakdown.push(`SERVICE TAX (SST):`);
+        breakdown.push(`RM 0.00 (Waived for net consumption ≤ 600 kWh)`);
+    }
+
+    const totalAmount = subtotalBeforeKWTBBSST + kwtbb + sst;
+
+    breakdown.push('');
+    breakdown.push(`FINAL TOTAL CALCULATION:`);
+    breakdown.push(`Subtotal (before KWTBB & SST): RM ${subtotalBeforeKWTBBSST.toFixed(2)}`);
+    breakdown.push(`Plus KWTBB: RM ${kwtbb.toFixed(2)}`);
+    breakdown.push(`Plus SST: RM ${sst.toFixed(2)}`);
     breakdown.push('');
     breakdown.push(`TOTAL: RM ${totalAmount.toFixed(2)}`);
 
@@ -414,6 +446,9 @@ export function calculateElectricityBill(inputs: CalculatorInputs): CalculationR
     if (tariffType === 'old') {
         breakdown.renewableEnergyFund = 0;
         breakdown.serviceTax = 0;
+    } else {
+        breakdown.kwtbb = 0;
+        breakdown.sst = 0;
     }
 
     return {
