@@ -9,7 +9,6 @@ import { Switch } from './ui/switch';
 import { Slider } from './ui/slider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Alert, AlertDescription } from './ui/alert';
-import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
 import { Info, Calculator, Zap, Sun, Clock } from 'lucide-react';
 import { useCalculatorStore, calculatorSelectors } from '../store/calculatorStore';
