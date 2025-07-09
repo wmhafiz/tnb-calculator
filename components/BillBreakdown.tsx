@@ -4,7 +4,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Badge } from './ui/badge';
-import { Receipt, Zap, Calculator } from 'lucide-react';
+import { Receipt, Zap, Calculator, Sun } from 'lucide-react';
 import { useCalculatorStore, selectBreakdownData } from '../store/calculatorStore';
 
 interface ChargeItem {
@@ -20,6 +20,7 @@ interface ChargeItem {
 export default function BillBreakdown() {
     const result = useCalculatorStore(selectBreakdownData);
     const inputs = useCalculatorStore(state => state.inputs);
+    const solarSavings = useCalculatorStore(state => state.result?.solarSavings);
 
     if (!result?.breakdown) {
         return null;
@@ -93,6 +94,21 @@ export default function BillBreakdown() {
                 amount: breakdown.retailCharge
             });
 
+            // Solar Offset (if applicable)
+            if (inputs.enableSolar && solarSavings && solarSavings > 0) {
+                // Extract solar offset details from detailed calculation
+                const solarOffsetMatch = detailedText.match(/Total Solar Offset: RM ([\d.]+)/);
+                const solarAmount = solarOffsetMatch ? parseFloat(solarOffsetMatch[1]) : solarSavings;
+
+                items.push({
+                    charge: 'Solar Offset',
+                    rate: 'Variable',
+                    calculation: `${inputs.solarExcessKWh} kWh excess generation`,
+                    amount: -solarAmount,
+                    isRebate: true
+                });
+            }
+
             // Energy Efficiency Initiative (if applicable)
             if (breakdown.energyEfficiencyIncentive > 0) {
                 // Extract EEI rate from detailed calculation
@@ -118,8 +134,9 @@ export default function BillBreakdown() {
             }
 
             // Calculate subtotal before KWTBB and SST
+            const solarOffset = (inputs.enableSolar && solarSavings && solarSavings > 0) ? solarSavings : 0;
             const subtotal = breakdown.generationCharge + breakdown.capacityCharge + breakdown.networkCharge +
-                breakdown.retailCharge + breakdown.automaticFuelAdjustment - breakdown.energyEfficiencyIncentive;
+                breakdown.retailCharge + breakdown.automaticFuelAdjustment - breakdown.energyEfficiencyIncentive - solarOffset;
 
             items.push({
                 charge: 'Total Charge',
@@ -161,6 +178,21 @@ export default function BillBreakdown() {
                 calculation: `${usage} kWh (Block rates)`,
                 amount: breakdown.generationCharge || 0
             });
+
+            // Solar Credit (for old tariff)
+            if (inputs.enableSolar && solarSavings && solarSavings > 0) {
+                // Extract solar credit details from detailed calculation
+                const solarCreditMatch = detailedText.match(/Total Solar Credit \(Lebihan Tenaga yang Dijana\): RM ([\d.]+)/);
+                const solarAmount = solarCreditMatch ? parseFloat(solarCreditMatch[1]) : solarSavings;
+
+                items.push({
+                    charge: 'Solar Credit (NEM)',
+                    rate: 'Variable',
+                    calculation: `${inputs.solarExcessKWh} kWh excess generation`,
+                    amount: -solarAmount,
+                    isRebate: true
+                });
+            }
 
             // Renewable Energy Fund
             if (breakdown.renewableEnergyFund) {
@@ -279,6 +311,20 @@ export default function BillBreakdown() {
                             <div className="flex items-center gap-2">
                                 <span className="font-medium">Time of Use:</span>
                                 <Badge variant="outline">Enabled</Badge>
+                            </div>
+                        )}
+                        {inputs.enableSolar && inputs.solarExcessKWh > 0 && (
+                            <div className="flex items-center gap-2">
+                                <Sun className="h-4 w-4 text-green-600" />
+                                <span className="font-medium">Solar:</span>
+                                <Badge variant="outline" className="text-green-600 border-green-600">
+                                    {inputs.solarExcessKWh} kWh excess
+                                </Badge>
+                                {solarSavings && solarSavings > 0 && (
+                                    <span className="text-green-600 font-medium">
+                                        -RM {formatCurrency(solarSavings)}
+                                    </span>
+                                )}
                             </div>
                         )}
                     </div>
