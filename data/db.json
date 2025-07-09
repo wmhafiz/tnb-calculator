@@ -1,0 +1,86 @@
+{
+    "tnbTariffRates": {
+        "effectiveDate": "2025-07-01",
+        "generalDomesticTariff": {
+            "description": "Simplified from 5-block to 2-block rate structure.",
+            "components": {
+                "generationCharge": {
+                    "description": "Cost related to fuel and generation.",
+                    "tier1": {
+                        "usageKWhRange": "0 - 1500 kWh/month",
+                        "rateSenPerKWh": 27.03
+                    },
+                    "tier2": {
+                        "usageKWhRange": "> 1500 kWh/month",
+                        "rateSenPerKWh": 37.03
+                    }
+                },
+                "capacityCharge": {
+                    "description": "Charge for ensuring system capacity and reliability.",
+                    "rateSenPerKWh": 4.55
+                },
+                "networkCharge": {
+                    "description": "Covers operation and maintenance of the electricity infrastructure.",
+                    "rateSenPerKWh": 12.85
+                },
+                "retailCharge": {
+                    "description": "Covers customer service and billing costs.",
+                    "monthlyFeeRM": 10.00,
+                    "waiverCondition": "Waived for domestic customers using 600 kWh or less per month."
+                },
+                "automaticFuelAdjustment": {
+                    "description": "Variable mechanism (formerly ICPT), adjusted periodically based on fuel costs. Currently RM0.00 for July 2025."
+                },
+                "energyEfficiencyIncentive": {
+                    "description": "Rebate to encourage energy efficiency.",
+                    "rebateSenPerKWh": "Up to 25 sen/kWh",
+                    "condition": "For domestic customers using 1,000 kWh or less per month."
+                }
+            }
+        },
+        "timeOfUseTariff": {
+            "schemeName": "Time of Use (ToU) Tariff",
+            "availability": "Optional opt-in scheme, expanded to all registered TNB domestic customers.",
+            "applicationProcess": "Submit application form via email (tnbtou@tnb.com.my), Kedai Tenaga, or myTNB app. Requires a RM10 stamp duty fee on the supply contract.",
+            "switchProcessingTime": {
+                "smartMeterActivated": "5 working days",
+                "smartMeterNotActivated": "2 months (subject to network availability)"
+            },
+            "switchBackFee": "RM10 stamp duty fee for switching back to General Tariff (recommended after at least one billing cycle).",
+            "timeZones": {
+                "weekdays": {
+                    "peakHours": "2:00 PM - 10:00 PM (8 hours)",
+                    "offPeakHours": "10:00 PM - 2:00 PM (16 hours)"
+                },
+                "weekendsAndPublicHolidays": {
+                    "offPeakHours": "24 hours"
+                },
+                "publicHolidaysList": [
+                    "New Year's Day",
+                    "Chinese New Year (2 days)",
+                    "Federal Territory Day",
+                    "Labour Day",
+                    "Vesak Day",
+                    "Agong's Birthday",
+                    "National Day",
+                    "Malaysia Day",
+                    "Deepavali",
+                    "Christmas Day",
+                    "Hari Raya Puasa (2 days)",
+                    "Hari Raya Haji"
+                ]
+            },
+            "energyChargeToURates": {
+                "description": "Energy charges for Time of Use scheme with differentiated peak and off-peak rates.",
+                "usageUpTo1500KWhPerMonth": {
+                    "peakRateSenPerKWh": 28.52,
+                    "offPeakRateSenPerKWh": 24.43
+                },
+                "usageOver1500KWhPerMonth": {
+                    "peakRateSenPerKWh": 38.52,
+                    "offPeakRateSenPerKWh": 34.43
+                }
+            }
+        }
+    }
+}
