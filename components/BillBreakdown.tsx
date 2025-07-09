@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Badge } from './ui/badge';
 import { Receipt, Zap, Calculator, Sun } from 'lucide-react';
 import { useCalculatorStore, selectBreakdownData } from '../store/calculatorStore';
+import { useUrlState } from '../hooks/useUrlState';
 
 interface ChargeItem {
     charge: string;
@@ -19,8 +20,8 @@ interface ChargeItem {
 
 export default function BillBreakdown() {
     const result = useCalculatorStore(selectBreakdownData);
-    const inputs = useCalculatorStore(state => state.inputs);
     const solarSavings = useCalculatorStore(state => state.result?.solarSavings);
+    const { inputs } = useUrlState();
 
     if (!result?.breakdown) {
         return null;

@@ -4,7 +4,7 @@ import type { CalculatorStore } from '../types/store';
 import type { CalculatorInputs, CalculationResult, BillBreakdown, OldTariffRates } from '../types/calculator';
 import tariffData from '../data/db.json';
 
-// Default inputs
+// Default inputs - now only used for reference
 const defaultInputs: CalculatorInputs = {
     monthlyUsageKWh: 0,
     tariffType: 'new',
@@ -502,58 +502,12 @@ export const useCalculatorStore = create<CalculatorStore>()(
         devtools(
             (set, get) => ({
                 // Initial state
-                inputs: defaultInputs,
                 result: null,
                 isCalculating: false,
                 error: null,
 
-                // Input actions - simplified without automatic calculation
-                setMonthlyUsage: (usage: number) => {
-                    set((state) => ({
-                        inputs: { ...state.inputs, monthlyUsageKWh: usage }
-                    }));
-                },
-
-                setTariffType: (tariffType: 'old' | 'new') => {
-                    set((state) => ({
-                        inputs: { ...state.inputs, tariffType }
-                    }));
-                },
-
-                setEnableToU: (enabled: boolean) => {
-                    set((state) => ({
-                        inputs: { ...state.inputs, enableToU: enabled }
-                    }));
-                },
-
-                setTouPeakPercentage: (percentage: number) => {
-                    set((state) => ({
-                        inputs: { ...state.inputs, touPeakPercentage: percentage }
-                    }));
-                },
-
-                setEnableSolar: (enabled: boolean) => {
-                    set((state) => ({
-                        inputs: { ...state.inputs, enableSolar: enabled }
-                    }));
-                },
-
-                setSolarExcessKWh: (excess: number) => {
-                    set((state) => ({
-                        inputs: { ...state.inputs, solarExcessKWh: excess }
-                    }));
-                },
-
-                setAfaSenPerKWh: (afa: number) => {
-                    set((state) => ({
-                        inputs: { ...state.inputs, afaSenPerKWh: afa }
-                    }));
-                },
-
                 // Calculation actions
-                calculate: () => {
-                    const { inputs } = get();
-
+                calculate: (inputs: CalculatorInputs) => {
                     if (inputs.monthlyUsageKWh <= 0) {
                         set({ result: null, error: null, isCalculating: false });
                         return;
@@ -572,19 +526,13 @@ export const useCalculatorStore = create<CalculatorStore>()(
                     }
                 },
 
-                recalculate: () => {
-                    get().calculate();
+                recalculate: (inputs: CalculatorInputs) => {
+                    get().calculate(inputs);
                 },
 
                 // Reset actions
-                resetInputs: () => {
-                    set({ inputs: defaultInputs });
-                    setTimeout(() => get().calculate(), 0);
-                },
-
                 resetAll: () => {
                     set({
-                        inputs: defaultInputs,
                         result: null,
                         isCalculating: false,
                         error: null
@@ -607,44 +555,10 @@ export const useCalculatorStore = create<CalculatorStore>()(
     )
 );
 
-// Set up automatic calculation when inputs change
-let calculationTimeout: NodeJS.Timeout | null = null;
-
-const debouncedCalculate = () => {
-    if (calculationTimeout) {
-        clearTimeout(calculationTimeout);
-    }
-    calculationTimeout = setTimeout(() => {
-        useCalculatorStore.getState().calculate();
-    }, 100); // 100ms debounce
-};
-
-// Subscribe to input changes and trigger calculation
-useCalculatorStore.subscribe(
-    (state) => state.inputs,
-    (inputs) => {
-        debouncedCalculate();
-    },
-    {
-        equalityFn: (a, b) => JSON.stringify(a) === JSON.stringify(b)
-    }
-);
-
-// Initialize with default calculation
-useCalculatorStore.getState().calculate();
+// Initialize with empty state - calculations will be triggered by URL state changes
 
 // Selectors for optimized subscriptions
 export const calculatorSelectors = {
-    // Input selectors
-    inputs: (state: CalculatorStore) => state.inputs,
-    monthlyUsage: (state: CalculatorStore) => state.inputs.monthlyUsageKWh,
-    tariffType: (state: CalculatorStore) => state.inputs.tariffType,
-    enableToU: (state: CalculatorStore) => state.inputs.enableToU,
-    touPeakPercentage: (state: CalculatorStore) => state.inputs.touPeakPercentage,
-    enableSolar: (state: CalculatorStore) => state.inputs.enableSolar,
-    solarExcessKWh: (state: CalculatorStore) => state.inputs.solarExcessKWh,
-    afaSenPerKWh: (state: CalculatorStore) => state.inputs.afaSenPerKWh,
-
     // Result selectors
     result: (state: CalculatorStore) => state.result,
     breakdown: (state: CalculatorStore) => state.result?.breakdown || null,

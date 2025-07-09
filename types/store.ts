@@ -1,9 +1,6 @@
 import type { CalculatorInputs, CalculationResult, BillBreakdown } from './calculator';
 
 export interface CalculatorState {
-    // Input state
-    inputs: CalculatorInputs;
-
     // Calculation results
     result: CalculationResult | null;
 
@@ -15,21 +12,11 @@ export interface CalculatorState {
 }
 
 export interface CalculatorActions {
-    // Input actions
-    setMonthlyUsage: (usage: number) => void;
-    setTariffType: (tariffType: 'old' | 'new') => void;
-    setEnableToU: (enabled: boolean) => void;
-    setTouPeakPercentage: (percentage: number) => void;
-    setEnableSolar: (enabled: boolean) => void;
-    setSolarExcessKWh: (excess: number) => void;
-    setAfaSenPerKWh: (afa: number) => void;
-
     // Calculation actions
-    calculate: () => void;
-    recalculate: () => void;
+    calculate: (inputs: CalculatorInputs) => void;
+    recalculate: (inputs: CalculatorInputs) => void;
 
     // Reset actions
-    resetInputs: () => void;
     resetAll: () => void;
 
     // Error handling
@@ -41,16 +28,6 @@ export interface CalculatorStore extends CalculatorState, CalculatorActions { }
 
 // Selector types for optimized component subscriptions
 export interface CalculatorSelectors {
-    // Input selectors
-    inputs: (state: CalculatorStore) => CalculatorInputs;
-    monthlyUsage: (state: CalculatorStore) => number;
-    tariffType: (state: CalculatorStore) => 'old' | 'new';
-    enableToU: (state: CalculatorStore) => boolean;
-    touPeakPercentage: (state: CalculatorStore) => number;
-    enableSolar: (state: CalculatorStore) => boolean;
-    solarExcessKWh: (state: CalculatorStore) => number;
-    afaSenPerKWh: (state: CalculatorStore) => number;
-
     // Result selectors
     result: (state: CalculatorStore) => CalculationResult | null;
     breakdown: (state: CalculatorStore) => BillBreakdown | null;

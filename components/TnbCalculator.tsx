@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -13,24 +13,41 @@ import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
 import { Info, Calculator, Zap, Sun, Clock } from 'lucide-react';
 import { useCalculatorStore, calculatorSelectors } from '../store/calculatorStore';
+import { useUrlState } from '../hooks/useUrlState';
 import tariffData from '../data/db.json';
 import BillBreakdown from './BillBreakdown';
 
 export default function TnbCalculator() {
-    // Use Zustand store
-    const inputs = useCalculatorStore(calculatorSelectors.inputs);
+    // Use URL state for inputs
+    const {
+        inputs,
+        setMonthlyUsage,
+        setTariffType,
+        setEnableToU,
+        setTouPeakPercentage,
+        setEnableSolar,
+        setSolarExcessKWh,
+        setAfaSenPerKWh,
+    } = useUrlState();
+
+    // Use Zustand store for calculation results
     const result = useCalculatorStore(calculatorSelectors.result);
     const isCalculating = useCalculatorStore(calculatorSelectors.isCalculating);
     const error = useCalculatorStore(calculatorSelectors.error);
+    const calculate = useCalculatorStore(state => state.calculate);
 
-    // Store actions
-    const setMonthlyUsage = useCalculatorStore(state => state.setMonthlyUsage);
-    const setTariffType = useCalculatorStore(state => state.setTariffType);
-    const setEnableToU = useCalculatorStore(state => state.setEnableToU);
-    const setTouPeakPercentage = useCalculatorStore(state => state.setTouPeakPercentage);
-    const setEnableSolar = useCalculatorStore(state => state.setEnableSolar);
-    const setSolarExcessKWh = useCalculatorStore(state => state.setSolarExcessKWh);
-    const setAfaSenPerKWh = useCalculatorStore(state => state.setAfaSenPerKWh);
+    // Use ref to track previous inputs to prevent infinite loops
+    const prevInputsRef = useRef<string>('');
+
+    // Trigger calculation when inputs change
+    useEffect(() => {
+        const inputsString = JSON.stringify(inputs);
+        if (inputsString !== prevInputsRef.current) {
+            prevInputsRef.current = inputsString;
+            calculate(inputs);
+        }
+    }, [inputs]); // eslint-disable-line react-hooks/exhaustive-deps
+    // Note: calculate is intentionally omitted from dependencies to prevent infinite loops
 
     const formatCurrency = (amount: number) => {
         return `RM ${amount.toFixed(2)}`;
