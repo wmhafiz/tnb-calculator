@@ -5,11 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Badge } from './ui/badge';
 import { Receipt, Zap, Calculator } from 'lucide-react';
-import type { CalculationResult } from '../types/calculator';
-
-interface BillBreakdownProps {
-    result: CalculationResult;
-}
+import { useCalculatorStore, selectBreakdownData } from '../store/calculatorStore';
 
 interface ChargeItem {
     charge: string;
@@ -21,7 +17,15 @@ interface ChargeItem {
     isRebate?: boolean;
 }
 
-export default function BillBreakdown({ result }: BillBreakdownProps) {
+export default function BillBreakdown() {
+    const result = useCalculatorStore(selectBreakdownData);
+    const inputs = useCalculatorStore(state => state.inputs);
+
+    if (!result?.breakdown) {
+        return null;
+    }
+
+    const { breakdown, detailedCalculation } = result;
     const formatCurrency = (amount: number) => {
         return amount.toFixed(2);
     };
@@ -33,7 +37,6 @@ export default function BillBreakdown({ result }: BillBreakdownProps) {
     // Parse the detailed calculation to extract structured data
     const parseCalculationData = (): ChargeItem[] => {
         const items: ChargeItem[] = [];
-        const { breakdown, inputs, detailedCalculation } = result;
         const detailedText = detailedCalculation.join('\n');
 
         if (inputs.tariffType === 'new') {
@@ -263,16 +266,16 @@ export default function BillBreakdown({ result }: BillBreakdownProps) {
                         <div className="flex items-center gap-2">
                             <Zap className="h-4 w-4 text-blue-600" />
                             <span className="font-medium">Usage:</span>
-                            <span>{result.inputs.monthlyUsageKWh} kWh</span>
+                            <span>{inputs.monthlyUsageKWh} kWh</span>
                         </div>
                         <div className="flex items-center gap-2">
                             <Calculator className="h-4 w-4 text-blue-600" />
                             <span className="font-medium">Tariff:</span>
-                            <Badge variant={result.inputs.tariffType === 'new' ? 'default' : 'secondary'}>
-                                {result.inputs.tariffType === 'new' ? 'New General Domestic' : 'Old Tariff'}
+                            <Badge variant={inputs.tariffType === 'new' ? 'default' : 'secondary'}>
+                                {inputs.tariffType === 'new' ? 'New General Domestic' : 'Old Tariff'}
                             </Badge>
                         </div>
-                        {result.inputs.enableToU && (
+                        {inputs.enableToU && (
                             <div className="flex items-center gap-2">
                                 <span className="font-medium">Time of Use:</span>
                                 <Badge variant="outline">Enabled</Badge>

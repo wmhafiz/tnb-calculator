@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -12,35 +12,25 @@ import { Alert, AlertDescription } from './ui/alert';
 import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
 import { Info, Calculator, Zap, Sun, Clock } from 'lucide-react';
-import { calculateElectricityBill } from '../utils/calculator';
-import type { CalculatorInputs } from '../types/calculator';
+import { useCalculatorStore, calculatorSelectors } from '../store/calculatorStore';
 import tariffData from '../data/db.json';
 import BillBreakdown from './BillBreakdown';
 
 export default function TnbCalculator() {
-    const [inputs, setInputs] = useState<CalculatorInputs>({
-        monthlyUsageKWh: 778,
-        tariffType: 'new',
-        enableToU: false,
-        touPeakPercentage: 30,
-        enableSolar: false,
-        solarExcessKWh: 0,
-        afaSenPerKWh: 0.0, // Default AFA rate
-    });
+    // Use Zustand store
+    const inputs = useCalculatorStore(calculatorSelectors.inputs);
+    const result = useCalculatorStore(calculatorSelectors.result);
+    const isCalculating = useCalculatorStore(calculatorSelectors.isCalculating);
+    const error = useCalculatorStore(calculatorSelectors.error);
 
-    const result = useMemo(() => {
-        if (inputs.monthlyUsageKWh > 0) {
-            return calculateElectricityBill(inputs);
-        }
-        return null;
-    }, [inputs]);
-
-    const handleInputChange = (field: keyof CalculatorInputs, value: string | number | boolean) => {
-        setInputs(prev => ({
-            ...prev,
-            [field]: value
-        }));
-    };
+    // Store actions
+    const setMonthlyUsage = useCalculatorStore(state => state.setMonthlyUsage);
+    const setTariffType = useCalculatorStore(state => state.setTariffType);
+    const setEnableToU = useCalculatorStore(state => state.setEnableToU);
+    const setTouPeakPercentage = useCalculatorStore(state => state.setTouPeakPercentage);
+    const setEnableSolar = useCalculatorStore(state => state.setEnableSolar);
+    const setSolarExcessKWh = useCalculatorStore(state => state.setSolarExcessKWh);
+    const setAfaSenPerKWh = useCalculatorStore(state => state.setAfaSenPerKWh);
 
     const formatCurrency = (amount: number) => {
         return `RM ${amount.toFixed(2)}`;
@@ -82,7 +72,7 @@ export default function TnbCalculator() {
                                 id="usage"
                                 type="number"
                                 value={inputs.monthlyUsageKWh}
-                                onChange={(e) => handleInputChange('monthlyUsageKWh', Number(e.target.value))}
+                                onChange={(e) => setMonthlyUsage(Number(e.target.value))}
                                 placeholder="e.g., 778"
                                 min="0"
                                 step="1"
@@ -94,7 +84,7 @@ export default function TnbCalculator() {
                             <Label>Tariff Type</Label>
                             <Select
                                 value={inputs.tariffType}
-                                onValueChange={(value: 'old' | 'new') => handleInputChange('tariffType', value)}
+                                onValueChange={(value: 'old' | 'new') => setTariffType(value)}
                             >
                                 <SelectTrigger>
                                     <SelectValue />
@@ -117,7 +107,7 @@ export default function TnbCalculator() {
                                     <Switch
                                         id="tou-toggle"
                                         checked={inputs.enableToU}
-                                        onCheckedChange={(checked) => handleInputChange('enableToU', checked)}
+                                        onCheckedChange={(checked) => setEnableToU(checked)}
                                     />
                                 </div>
 
@@ -135,7 +125,7 @@ export default function TnbCalculator() {
                                             <Label>Peak Usage Distribution: {inputs.touPeakPercentage}%</Label>
                                             <Slider
                                                 value={[inputs.touPeakPercentage]}
-                                                onValueChange={(value) => handleInputChange('touPeakPercentage', value[0])}
+                                                onValueChange={(value) => setTouPeakPercentage(value[0])}
                                                 max={100}
                                                 min={0}
                                                 step={5}
@@ -161,7 +151,7 @@ export default function TnbCalculator() {
                                 <Switch
                                     id="solar-toggle"
                                     checked={inputs.enableSolar}
-                                    onCheckedChange={(checked) => handleInputChange('enableSolar', checked)}
+                                    onCheckedChange={(checked) => setEnableSolar(checked)}
                                 />
                             </div>
 
@@ -172,7 +162,7 @@ export default function TnbCalculator() {
                                         id="solar-excess"
                                         type="number"
                                         value={inputs.solarExcessKWh}
-                                        onChange={(e) => handleInputChange('solarExcessKWh', Number(e.target.value))}
+                                        onChange={(e) => setSolarExcessKWh(Number(e.target.value))}
                                         placeholder="e.g., 474"
                                         min="0"
                                         step="1"
@@ -197,7 +187,7 @@ export default function TnbCalculator() {
                                 <div className="space-y-2">
                                     <Slider
                                         value={[inputs.afaSenPerKWh]}
-                                        onValueChange={(value) => handleInputChange('afaSenPerKWh', value[0])}
+                                        onValueChange={(value) => setAfaSenPerKWh(value[0])}
                                         max={3}
                                         min={-3}
                                         step={0.1}
@@ -235,7 +225,20 @@ export default function TnbCalculator() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        {result ? (
+                        {error && (
+                            <Alert className="mb-4">
+                                <Info className="h-4 w-4" />
+                                <AlertDescription>
+                                    <strong>Error:</strong> {error}
+                                </AlertDescription>
+                            </Alert>
+                        )}
+                        {isCalculating ? (
+                            <div className="text-center py-12 text-gray-500">
+                                <Calculator className="h-12 w-12 mx-auto mb-4 opacity-50 animate-spin" />
+                                <p>Calculating...</p>
+                            </div>
+                        ) : result ? (
                             <div className="space-y-6">
                                 {/* Total Amount */}
                                 <div className="text-center p-6 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg">
@@ -344,7 +347,7 @@ export default function TnbCalculator() {
                             </TabsList>
 
                             <TabsContent value="visual" className="space-y-4">
-                                <BillBreakdown result={result} />
+                                <BillBreakdown />
                             </TabsContent>
 
                             <TabsContent value="breakdown" className="space-y-4">
