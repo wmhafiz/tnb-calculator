@@ -16,6 +16,7 @@ import { Info, Calculator, Zap, Sun, Clock } from 'lucide-react';
 import { calculateElectricityBill } from '../utils/calculator';
 import type { CalculatorInputs } from '../types/calculator';
 import tariffData from '../data/db.json';
+import BillBreakdown from './BillBreakdown';
 
 export default function TnbCalculator() {
     const [inputs, setInputs] = useState<CalculatorInputs>({
@@ -336,11 +337,16 @@ export default function TnbCalculator() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <Tabs defaultValue="breakdown" className="w-full">
-                            <TabsList className="grid w-full grid-cols-2">
+                        <Tabs defaultValue="visual" className="w-full">
+                            <TabsList className="grid w-full grid-cols-3">
+                                <TabsTrigger value="visual">Visual Breakdown</TabsTrigger>
                                 <TabsTrigger value="breakdown">Calculation Breakdown</TabsTrigger>
                                 <TabsTrigger value="tariff-info">Tariff Information</TabsTrigger>
                             </TabsList>
+
+                            <TabsContent value="visual" className="space-y-4">
+                                <BillBreakdown result={result} />
+                            </TabsContent>
 
                             <TabsContent value="breakdown" className="space-y-4">
                                 <div className="bg-gray-50 p-4 rounded-lg">

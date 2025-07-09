@@ -434,6 +434,7 @@ export function calculateElectricityBill(inputs: CalculatorInputs): CalculationR
         }
     }
 
+    // Parse the breakdown from the detailed calculation
     const breakdown: BillBreakdown = {
         generationCharge: 0,
         capacityCharge: 0,
@@ -444,12 +445,37 @@ export function calculateElectricityBill(inputs: CalculatorInputs): CalculationR
         totalAmount: result.amount
     };
 
-    if (tariffType === 'old') {
-        breakdown.renewableEnergyFund = 0;
-        breakdown.serviceTax = 0;
+    // Extract values from the detailed calculation text
+    const detailedText = result.breakdown.join('\n');
+
+    if (tariffType === 'new') {
+        // Extract values for new tariff
+        const generationMatch = detailedText.match(/Generation Charge: RM ([\d.]+)/);
+        const capacityMatch = detailedText.match(/Capacity Charge: RM ([\d.]+)/);
+        const networkMatch = detailedText.match(/Network Charge: RM ([\d.]+)/);
+        const retailMatch = detailedText.match(/Retail Charge: RM ([\d.]+)/);
+        const afaMatch = detailedText.match(/AFA: RM ([-\d.]+)/);
+        const eeiMatch = detailedText.match(/Less EEI Rebate: RM ([\d.]+)/);
+        const kwtbbMatch = detailedText.match(/1\.6% of RM [\d.]+ = RM ([\d.]+)/);
+        const sstMatch = detailedText.match(/8% × \d+ kWh × [\d.]+ sen\/kWh = RM ([\d.]+)/);
+
+        breakdown.generationCharge = generationMatch ? parseFloat(generationMatch[1]) : 0;
+        breakdown.capacityCharge = capacityMatch ? parseFloat(capacityMatch[1]) : 0;
+        breakdown.networkCharge = networkMatch ? parseFloat(networkMatch[1]) : 0;
+        breakdown.retailCharge = retailMatch ? parseFloat(retailMatch[1]) : 0;
+        breakdown.automaticFuelAdjustment = afaMatch ? parseFloat(afaMatch[1]) : 0;
+        breakdown.energyEfficiencyIncentive = eeiMatch ? parseFloat(eeiMatch[1]) : 0;
+        breakdown.kwtbb = kwtbbMatch ? parseFloat(kwtbbMatch[1]) : 0;
+        breakdown.sst = sstMatch ? parseFloat(sstMatch[1]) : 0;
     } else {
-        breakdown.kwtbb = 0;
-        breakdown.sst = 0;
+        // Extract values for old tariff
+        const subtotalMatch = detailedText.match(/Subtotal: RM ([\d.]+)/);
+        const renewableMatch = detailedText.match(/Renewable Energy Fund \(1\.6%\): RM ([\d.]+)/);
+        const serviceMatch = detailedText.match(/Service Tax \(8% on taxable portion\): RM ([\d.]+)/);
+
+        breakdown.generationCharge = subtotalMatch ? parseFloat(subtotalMatch[1]) : 0;
+        breakdown.renewableEnergyFund = renewableMatch ? parseFloat(renewableMatch[1]) : 0;
+        breakdown.serviceTax = serviceMatch ? parseFloat(serviceMatch[1]) : 0;
     }
 
     return {
