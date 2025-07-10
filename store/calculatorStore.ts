@@ -121,30 +121,52 @@ function calculateOldTariff(usageKWh: number, solarExcessKWh: number = 0): { amo
     breakdown.push('');
     breakdown.push(`Renewable Energy Fund (1.6%): RM ${renewableEnergyFund.toFixed(2)}`);
 
+    // Add ICPT (Imbalance Cost Pass-Through) - Kadar ICPT dari 1 Jul 2024 - 30 Jun 2025
+    // i. Rebat 2 sen/kWh (600 kWh & ke bawah)
+    // ii. Tiada rebat/surcaj (601 kWh - 1,500 kWh)
+    // iii. Surcaj 10 sen/kWh (melebihi 1,500 kWh)
+    let icpt = 0;
+    let icptDescription = '';
+
+    if (usageKWh <= 600) {
+        // Rebate 2 sen/kWh for usage 600 kWh and below
+        icpt = -(usageKWh * 0.02);
+        icptDescription = `ICPT (Rebat 2 sen/kWh): RM ${icpt.toFixed(2)}`;
+    } else if (usageKWh <= 1500) {
+        // No rebate/surcharge for 601-1500 kWh
+        icpt = 0;
+        icptDescription = `ICPT (Tiada rebat/surcaj): RM ${icpt.toFixed(2)}`;
+    } else {
+        // Surcharge 10 sen/kWh for total usage above 1500 kWh
+        icpt = usageKWh * 0.10;
+        icptDescription = `ICPT (Surcaj 10 sen/kWh untuk ${usageKWh} kWh): RM ${icpt.toFixed(2)}`;
+    }
+
+    totalAmount += icpt;
+    breakdown.push(icptDescription);
+
     // Add Service Tax (8% only on consumption > 600 kWh)
+    // Service Tax is calculated on the taxable energy charge only (above 600 kWh)
     let serviceTax = 0;
     if (usageKWh > OLD_TARIFF_RATES.serviceTaxThreshold) {
         const taxableUsage = usageKWh - OLD_TARIFF_RATES.serviceTaxThreshold;
-        let taxableAmount = 0;
+        let taxableEnergyCharge = 0;
 
         if (taxableUsage <= 300) {
-            taxableAmount = taxableUsage * 54.60 / 100;
+            // 601-900 kWh range
+            taxableEnergyCharge = taxableUsage * 54.60 / 100;
         } else {
-            taxableAmount = 300 * 54.60 / 100;
-            taxableAmount += (taxableUsage - 300) * 57.10 / 100;
+            // 601-900 kWh (300 kWh) + 901+ kWh range
+            taxableEnergyCharge = 300 * 54.60 / 100;
+            taxableEnergyCharge += (taxableUsage - 300) * 57.10 / 100;
         }
 
-        serviceTax = taxableAmount * OLD_TARIFF_RATES.serviceTaxRate;
+        serviceTax = taxableEnergyCharge * OLD_TARIFF_RATES.serviceTaxRate;
         totalAmount += serviceTax;
-        breakdown.push(`Service Tax (8% on taxable portion): RM ${serviceTax.toFixed(2)}`);
+        breakdown.push(`Service Tax (8% on taxable energy charge): RM ${serviceTax.toFixed(2)}`);
     } else {
         breakdown.push(`Service Tax (8%): RM 0.00 (Waived for usage ≤ 600 kWh)`);
     }
-
-    // Add ICPT (currently RM 0.00)
-    const icpt = 0;
-    totalAmount += icpt;
-    breakdown.push(`ICPT (Imbalance Cost Pass-Through): RM ${icpt.toFixed(2)}`);
 
     // Calculate solar offset
     let solarSavings = 0;

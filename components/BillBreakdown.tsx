@@ -169,15 +169,43 @@ export default function BillBreakdown() {
             }
 
         } else {
-            // Old tariff structure - simplified for display
+            // Old tariff structure - detailed breakdown
             const usage = inputs.monthlyUsageKWh;
 
-            // Energy charges (simplified as one line)
+            // Parse detailed block charges from calculation text (only energy charges, not solar credits)
+            const energySection = detailedText.split('Subtotal:')[0]; // Only look at the energy charge section
+            const blockMatches = energySection.match(/(\d+-\d+|\d+\+) kWh: (\d+) kWh × ([\d.]+) sen\/kWh = RM ([\d.]+)/g);
+
+            if (blockMatches) {
+                blockMatches.forEach(match => {
+                    const blockMatch = match.match(/(\d+-\d+|\d+\+) kWh: (\d+) kWh × ([\d.]+) sen\/kWh = RM ([\d.]+)/);
+                    if (blockMatch) {
+                        const [, range, kWh, rate, amount] = blockMatch;
+                        items.push({
+                            charge: `Block ${range} kWh`,
+                            rate: `${rate} sen/kWh`,
+                            calculation: `${kWh} kWh × ${rate} sen/kWh`,
+                            amount: parseFloat(amount)
+                        });
+                    }
+                });
+            } else {
+                // Fallback to simplified display if parsing fails
+                items.push({
+                    charge: 'Energy Charge',
+                    rate: 'Tiered',
+                    calculation: `${usage} kWh (Block rates)`,
+                    amount: breakdown.generationCharge || 0
+                });
+            }
+
+            // Energy charge subtotal (before additional charges)
             items.push({
-                charge: 'Energy Charge',
-                rate: 'Tiered',
-                calculation: `${usage} kWh (Block rates)`,
-                amount: breakdown.generationCharge || 0
+                charge: 'Energy Charge Subtotal',
+                rate: '',
+                calculation: 'Sum of all blocks',
+                amount: breakdown.generationCharge || 0,
+                isSubtotal: true
             });
 
             // Solar Credit (for old tariff)
@@ -205,13 +233,69 @@ export default function BillBreakdown() {
                 });
             }
 
-            // Service Tax
-            if (breakdown.serviceTax) {
+            // Service Tax - parse from detailed calculation text
+            const serviceTaxMatch = detailedText.match(/Service Tax \(8% on taxable energy charge\): RM ([\d.]+)/);
+            const serviceTaxWaivedMatch = detailedText.match(/Service Tax \(8%\): RM 0\.00 \(Waived for usage ≤ 600 kWh\)/);
+
+            if (serviceTaxMatch) {
+                const serviceTaxAmount = parseFloat(serviceTaxMatch[1]);
+                // Calculate taxable usage and description
+                const taxableUsage = usage - 600;
+                let taxableDescription = '';
+
+                if (taxableUsage <= 300) {
+                    taxableDescription = `8% × ${taxableUsage} kWh × 54.6 sen/kWh`;
+                } else {
+                    const block1 = 300;
+                    const block2 = taxableUsage - 300;
+                    taxableDescription = `8% × (${block1} kWh × 54.6 + ${block2} kWh × 57.1) sen/kWh`;
+                }
+
                 items.push({
                     charge: 'Service Tax',
                     rate: '8%',
-                    calculation: `8% × (${usage} - 600) kWh`,
-                    amount: breakdown.serviceTax
+                    calculation: taxableDescription,
+                    amount: serviceTaxAmount
+                });
+            } else if (serviceTaxWaivedMatch) {
+                items.push({
+                    charge: 'Service Tax',
+                    rate: '8%',
+                    calculation: 'Waived (usage ≤ 600 kWh)',
+                    amount: 0
+                });
+            }
+
+            // ICPT - always show with different formats
+            const icptRebateMatch = detailedText.match(/ICPT \(Rebat 2 sen\/kWh\): RM ([-\d.]+)/);
+            const icptNilMatch = detailedText.match(/ICPT \(Tiada rebat\/surcaj\): RM ([\d.]+)/);
+            const icptSurchargeMatch = detailedText.match(/ICPT \(Surcaj 10 sen\/kWh untuk (\d+) kWh\): RM ([\d.]+)/);
+
+            if (icptRebateMatch) {
+                const icptAmount = parseFloat(icptRebateMatch[1]);
+                items.push({
+                    charge: 'ICPT',
+                    rate: 'Rebat 2 sen/kWh',
+                    calculation: `${usage} kWh × 2 sen/kWh rebate`,
+                    amount: icptAmount,
+                    isRebate: true
+                });
+            } else if (icptNilMatch) {
+                const icptAmount = parseFloat(icptNilMatch[1]);
+                items.push({
+                    charge: 'ICPT',
+                    rate: 'Tiada rebat/surcaj',
+                    calculation: `601-1500 kWh range`,
+                    amount: icptAmount
+                });
+            } else if (icptSurchargeMatch) {
+                const excessKWh = parseInt(icptSurchargeMatch[1]);
+                const icptAmount = parseFloat(icptSurchargeMatch[2]);
+                items.push({
+                    charge: 'ICPT',
+                    rate: 'Surcaj 10 sen/kWh',
+                    calculation: `${excessKWh} kWh × 10 sen/kWh surcharge`,
+                    amount: icptAmount
                 });
             }
         }
