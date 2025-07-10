@@ -15,11 +15,23 @@ jest.mock('../data/db.json', () => ({
             },
             energyEfficiencyIncentive: {
                 tiers: [
-                    { usageKWhRange: "1-200", rateSenPerKWh: -25.00 },
-                    { usageKWhRange: "201-300", rateSenPerKWh: -19.00 },
-                    { usageKWhRange: "301-600", rateSenPerKWh: -16.00 },
-                    { usageKWhRange: "601-900", rateSenPerKWh: -10.00 },
-                    { usageKWhRange: "901-1000", rateSenPerKWh: -6.00 }
+                    { usageKWhRange: "1 - 200", rateSenPerKWh: -25.0 },
+                    { usageKWhRange: "201 - 250", rateSenPerKWh: -24.5 },
+                    { usageKWhRange: "251 - 300", rateSenPerKWh: -22.5 },
+                    { usageKWhRange: "301 - 350", rateSenPerKWh: -21.0 },
+                    { usageKWhRange: "351 - 400", rateSenPerKWh: -17.0 },
+                    { usageKWhRange: "401 - 450", rateSenPerKWh: -14.5 },
+                    { usageKWhRange: "451 - 500", rateSenPerKWh: -12.0 },
+                    { usageKWhRange: "501 - 550", rateSenPerKWh: -10.5 },
+                    { usageKWhRange: "551 - 600", rateSenPerKWh: -9.0 },
+                    { usageKWhRange: "601 - 650", rateSenPerKWh: -7.5 },
+                    { usageKWhRange: "651 - 700", rateSenPerKWh: -5.5 },
+                    { usageKWhRange: "701 - 750", rateSenPerKWh: -4.5 },
+                    { usageKWhRange: "751 - 800", rateSenPerKWh: -4.0 },
+                    { usageKWhRange: "801 - 850", rateSenPerKWh: -2.5 },
+                    { usageKWhRange: "851 - 900", rateSenPerKWh: -1.0 },
+                    { usageKWhRange: "901 - 1000", rateSenPerKWh: -0.5 },
+                    { usageKWhRange: "> 1000", rateSenPerKWh: 0.0 }
                 ]
             }
         }
@@ -439,5 +451,175 @@ describe('ICPT Analysis Tests', () => {
         console.log('Current calculation: (1906 - 1500) × 0.10 = RM 40.60');
         console.log('Possible correct calculation: 1906 × 0.10 = RM 190.60');
         console.log('This suggests ICPT might be applied to total usage, not just excess above 1500 kWh');
+    });
+});
+
+describe('Calculator Store - New Tariff Tests', () => {
+    describe('New Tariff Calculation Tests', () => {
+        it('should calculate new tariff correctly for 1906 kWh usage (no solar, AFA 0)', () => {
+            const store = useCalculatorStore.getState();
+            store.calculate({
+                monthlyUsageKWh: 1906,
+                tariffType: 'new',
+                enableSolar: false,
+                solarExcessKWh: 0,
+                enableToU: false,
+                touPeakPercentage: 50,
+                afaSenPerKWh: 0
+            });
+
+            const result = useCalculatorStore.getState().result;
+            expect(result).toBeTruthy();
+
+            // Expected values from screenshot
+            expect(result!.breakdown.generationCharge).toBeCloseTo(705.79, 2);
+            expect(result!.breakdown.capacityCharge).toBeCloseTo(86.72, 2);
+            expect(result!.breakdown.networkCharge).toBeCloseTo(244.92, 2);
+            expect(result!.breakdown.retailCharge).toBeCloseTo(10.00, 2);
+            expect(result!.breakdown.automaticFuelAdjustment).toBeCloseTo(0.00, 2);
+            expect(result!.breakdown.energyEfficiencyIncentive).toBeCloseTo(0.00, 2);
+            expect(result!.breakdown.kwtbb || 0).toBeCloseTo(16.76, 2);
+            expect(result!.breakdown.sst || 0).toBeCloseTo(38.69, 2);
+            expect(result!.breakdown.totalAmount).toBeCloseTo(1102.88, 2);
+        });
+
+        it('should calculate new tariff correctly for 1000 kWh usage (with EEI rebate)', () => {
+            const store = useCalculatorStore.getState();
+            store.calculate({
+                monthlyUsageKWh: 1000,
+                tariffType: 'new',
+                enableSolar: false,
+                solarExcessKWh: 0,
+                enableToU: false,
+                touPeakPercentage: 50,
+                afaSenPerKWh: 0
+            });
+
+            const result = useCalculatorStore.getState().result;
+            expect(result).toBeTruthy();
+
+
+
+            // For 1000 kWh usage (≤ 1500 kWh), should use tier 1 rate
+            const expectedGenerationCharge = 1000 * 27.03 / 100; // RM 270.30
+            const expectedCapacityCharge = 1000 * 4.55 / 100; // RM 45.50
+            const expectedNetworkCharge = 1000 * 12.85 / 100; // RM 128.50
+            const expectedRetailCharge = 10.00; // > 600 kWh
+
+            expect(result!.breakdown.generationCharge).toBeCloseTo(expectedGenerationCharge, 2);
+            expect(result!.breakdown.capacityCharge).toBeCloseTo(expectedCapacityCharge, 2);
+            expect(result!.breakdown.networkCharge).toBeCloseTo(expectedNetworkCharge, 2);
+            expect(result!.breakdown.retailCharge).toBeCloseTo(expectedRetailCharge, 2);
+
+            // Should have EEI rebate for 1000 kWh (expected: RM 5.00)
+            expect(result!.breakdown.energyEfficiencyIncentive).toBeCloseTo(5.00, 2);
+        });
+
+        it('should calculate new tariff correctly for 500 kWh usage (no retail charge)', () => {
+            const store = useCalculatorStore.getState();
+            store.calculate({
+                monthlyUsageKWh: 500,
+                tariffType: 'new',
+                enableSolar: false,
+                solarExcessKWh: 0,
+                enableToU: false,
+                touPeakPercentage: 50,
+                afaSenPerKWh: 0
+            });
+
+            const result = useCalculatorStore.getState().result;
+            expect(result).toBeTruthy();
+
+
+
+            // For 500 kWh usage (≤ 600 kWh), retail charge should be waived
+            expect(result!.breakdown.retailCharge).toBeCloseTo(0.00, 2);
+
+            // Should have no SST (≤ 600 kWh)
+            expect(result!.breakdown.sst || 0).toBeCloseTo(0.00, 2);
+
+            // Should have EEI rebate for 500 kWh (expected: RM 60.00)
+            expect(result!.breakdown.energyEfficiencyIncentive).toBeCloseTo(60.00, 2);
+        });
+
+        it('should calculate generation charge correctly for different usage tiers', () => {
+            // Test tier 1 (≤ 1500 kWh)
+            const store1 = useCalculatorStore.getState();
+            store1.calculate({
+                monthlyUsageKWh: 1500,
+                tariffType: 'new',
+                enableSolar: false,
+                solarExcessKWh: 0,
+                enableToU: false,
+                touPeakPercentage: 50,
+                afaSenPerKWh: 0
+            });
+
+            const result1 = useCalculatorStore.getState().result;
+            expect(result1).toBeTruthy();
+
+            // Should use tier 1 rate for entire usage
+            const expectedTier1Charge = 1500 * 27.03 / 100; // RM 405.45
+            expect(result1!.breakdown.generationCharge).toBeCloseTo(expectedTier1Charge, 2);
+
+            // Test tier 2 (> 1500 kWh)
+            const store2 = useCalculatorStore.getState();
+            store2.calculate({
+                monthlyUsageKWh: 1501,
+                tariffType: 'new',
+                enableSolar: false,
+                solarExcessKWh: 0,
+                enableToU: false,
+                touPeakPercentage: 50,
+                afaSenPerKWh: 0
+            });
+
+            const result2 = useCalculatorStore.getState().result;
+            expect(result2).toBeTruthy();
+
+            // Should use tier 2 rate for entire usage
+            const expectedTier2Charge = 1501 * 37.03 / 100; // RM 555.82
+            expect(result2!.breakdown.generationCharge).toBeCloseTo(expectedTier2Charge, 2);
+        });
+
+        it('should calculate SST correctly for different usage levels', () => {
+            // Test SST for tier 1 usage (> 600 kWh but ≤ 1500 kWh)
+            const store1 = useCalculatorStore.getState();
+            store1.calculate({
+                monthlyUsageKWh: 1000,
+                tariffType: 'new',
+                enableSolar: false,
+                solarExcessKWh: 0,
+                enableToU: false,
+                touPeakPercentage: 50,
+                afaSenPerKWh: 0
+            });
+
+            const result1 = useCalculatorStore.getState().result;
+            expect(result1).toBeTruthy();
+
+            // SST should use tier 1 rate: 8% × 400 kWh × 27.03 sen/kWh
+            const expectedSST1 = (1000 - 600) * 27.03 / 100 * 0.08; // RM 8.65
+            expect(result1!.breakdown.sst || 0).toBeCloseTo(expectedSST1, 2);
+
+            // Test SST for tier 2 usage (> 1500 kWh)
+            const store2 = useCalculatorStore.getState();
+            store2.calculate({
+                monthlyUsageKWh: 1906,
+                tariffType: 'new',
+                enableSolar: false,
+                solarExcessKWh: 0,
+                enableToU: false,
+                touPeakPercentage: 50,
+                afaSenPerKWh: 0
+            });
+
+            const result2 = useCalculatorStore.getState().result;
+            expect(result2).toBeTruthy();
+
+            // SST should use tier 2 rate: 8% × 1306 kWh × 37.03 sen/kWh
+            const expectedSST2 = (1906 - 600) * 37.03 / 100 * 0.08; // RM 38.69
+            expect(result2!.breakdown.sst || 0).toBeCloseTo(expectedSST2, 2);
+        });
     });
 }); 

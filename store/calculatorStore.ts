@@ -309,11 +309,9 @@ function calculateNewGeneralTariff(
             generationCharge = usageKWh * generalDomesticTariff.components.generationCharge.tier1.rateSenPerKWh / 100;
             breakdown.push(`${usageKWh} kWh × ${generalDomesticTariff.components.generationCharge.tier1.rateSenPerKWh} sen/kWh = RM ${generationCharge.toFixed(2)}`);
         } else {
-            const tier1Charge = 1500 * generalDomesticTariff.components.generationCharge.tier1.rateSenPerKWh / 100;
-            const tier2Charge = (usageKWh - 1500) * generalDomesticTariff.components.generationCharge.tier2.rateSenPerKWh / 100;
-            generationCharge = tier1Charge + tier2Charge;
-            breakdown.push(`Tier 1 (0-1500 kWh): 1500 kWh × ${generalDomesticTariff.components.generationCharge.tier1.rateSenPerKWh} sen/kWh = RM ${tier1Charge.toFixed(2)}`);
-            breakdown.push(`Tier 2 (>1500 kWh): ${usageKWh - 1500} kWh × ${generalDomesticTariff.components.generationCharge.tier2.rateSenPerKWh} sen/kWh = RM ${tier2Charge.toFixed(2)}`);
+            // For usage > 1500 kWh, apply tier 2 rate to entire usage
+            generationCharge = usageKWh * generalDomesticTariff.components.generationCharge.tier2.rateSenPerKWh / 100;
+            breakdown.push(`${usageKWh} kWh × ${generalDomesticTariff.components.generationCharge.tier2.rateSenPerKWh} sen/kWh = RM ${generationCharge.toFixed(2)}`);
         }
     }
 
@@ -373,6 +371,9 @@ function calculateNewGeneralTariff(
     breakdown.push('');
     breakdown.push(`ENERGY EFFICIENCY INCENTIVE (EEI):`);
     breakdown.push(`Net consumption: ${netConsumption} kWh`);
+
+
+
     for (const line of eeiCalculation.breakdown) {
         breakdown.push(line);
     }
@@ -409,7 +410,10 @@ function calculateNewGeneralTariff(
     let sst = 0;
     if (netConsumption > 600) {
         const taxableUsage = netConsumption - 600;
-        const generationRate = generalDomesticTariff.components.generationCharge.tier1.rateSenPerKWh;
+        // Use appropriate generation rate based on usage
+        const generationRate = netConsumption <= 1500 ?
+            generalDomesticTariff.components.generationCharge.tier1.rateSenPerKWh :
+            generalDomesticTariff.components.generationCharge.tier2.rateSenPerKWh;
         sst = (taxableUsage * generationRate / 100) * 0.08;
         breakdown.push('');
         breakdown.push(`SERVICE TAX (SST):`);
@@ -486,7 +490,9 @@ function calculateElectricityBill(inputs: CalculatorInputs): CalculationResult {
         const networkMatch = detailedText.match(/Network Charge: RM ([\d.]+)/);
         const retailMatch = detailedText.match(/Retail Charge: RM ([\d.]+)/);
         const afaMatch = detailedText.match(/AFA: RM ([-\d.]+)/);
-        const eeiMatch = detailedText.match(/Less EEI Rebate: RM ([\d.]+)/);
+        const eeiMatch = detailedText.match(/Less EEI Rebate: RM ([\d.]+)/i);
+
+
         const kwtbbMatch = detailedText.match(/1\.6% of RM [\d.]+ = RM ([\d.]+)/);
         const sstMatch = detailedText.match(/8% × \d+ kWh × [\d.]+ sen\/kWh = RM ([\d.]+)/);
 
