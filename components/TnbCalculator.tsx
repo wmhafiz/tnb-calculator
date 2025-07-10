@@ -127,7 +127,6 @@ export default function TnbCalculator() {
                                     <Switch
                                         id="tou-toggle"
                                         checked={inputs.enableToU}
-                                        disabled={inputs.monthlyUsageKWh > 1500}
                                         onCheckedChange={(checked) => setEnableToU(checked)}
                                     />
                                 </div>
@@ -343,14 +342,14 @@ export default function TnbCalculator() {
                                             <h4 className="font-semibold mb-2">New Tariff Components</h4>
                                             <div className="space-y-1 text-sm">
                                                 <div><strong>Generation Charge:</strong></div>
-                                                <div>• 0-1500 kWh: 27.03 sen/kWh</div>
-                                                <div>• &gt;1500 kWh: 37.03 sen/kWh</div>
-                                                <div><strong>Capacity Charge:</strong> 4.55 sen/kWh</div>
-                                                <div><strong>Network Charge:</strong> 12.85 sen/kWh</div>
-                                                <div><strong>Retail Charge:</strong> RM 10.00/month</div>
+                                                <div>• 0-1500 kWh: {tariffData.tnbTariffRates.generalDomesticTariff.components.generationCharge.tier1.rateSenPerKWh} sen/kWh</div>
+                                                <div>• &gt;1500 kWh: {tariffData.tnbTariffRates.generalDomesticTariff.components.generationCharge.tier2.rateSenPerKWh} sen/kWh</div>
+                                                <div><strong>Capacity Charge:</strong> {tariffData.tnbTariffRates.generalDomesticTariff.components.capacityCharge.rateSenPerKWh} sen/kWh</div>
+                                                <div><strong>Network Charge:</strong> {tariffData.tnbTariffRates.generalDomesticTariff.components.networkCharge.rateSenPerKWh} sen/kWh</div>
+                                                <div><strong>Retail Charge:</strong> RM {tariffData.tnbTariffRates.generalDomesticTariff.components.retailCharge.monthlyFeeRM}/month</div>
                                                 <div className="text-xs text-muted-foreground">(Waived if usage ≤ 600 kWh)</div>
                                                 <div><strong>EEI Rebate:</strong> Tiered rates</div>
-                                                <div className="text-xs text-muted-foreground">(1-200 kWh: 25 sen/kWh, decreasing by tier up to 1000 kWh)</div>
+                                                <div className="text-xs text-muted-foreground">(1-200 kWh: {Math.abs(tariffData.tnbTariffRates.generalDomesticTariff.energyEfficiencyIncentive.tiers[0].rateSenPerKWh)} sen/kWh, decreasing by tier up to 1000 kWh)</div>
                                             </div>
                                         </div>
                                     )}
@@ -378,11 +377,11 @@ export default function TnbCalculator() {
                                             <h4 className="font-semibold mb-2">Time of Use Rates</h4>
                                             <div className="space-y-1 text-sm">
                                                 <div><strong>Peak Hours (2PM-10PM, Weekdays):</strong></div>
-                                                <div>• 0-1500 kWh: 28.52 sen/kWh</div>
-                                                <div>• &gt;1500 kWh: 38.52 sen/kWh</div>
+                                                <div>• 0-1500 kWh: {tariffData.tnbTariffRates.timeOfUseTariff.energyChargeToURates.usageUpTo1500KWhPerMonth.peakRateSenPerKWh} sen/kWh</div>
+                                                <div>• &gt;1500 kWh: {tariffData.tnbTariffRates.timeOfUseTariff.energyChargeToURates.usageOver1500KWhPerMonth.peakRateSenPerKWh} sen/kWh</div>
                                                 <div><strong>Off-Peak Hours:</strong></div>
-                                                <div>• 0-1500 kWh: 24.43 sen/kWh</div>
-                                                <div>• &gt;1500 kWh: 34.43 sen/kWh</div>
+                                                <div>• 0-1500 kWh: {tariffData.tnbTariffRates.timeOfUseTariff.energyChargeToURates.usageUpTo1500KWhPerMonth.offPeakRateSenPerKWh} sen/kWh</div>
+                                                <div>• &gt;1500 kWh: {tariffData.tnbTariffRates.timeOfUseTariff.energyChargeToURates.usageOver1500KWhPerMonth.offPeakRateSenPerKWh} sen/kWh</div>
                                                 <div className="text-xs text-muted-foreground mt-2">
                                                     Other charges (Capacity, Network, Retail, EEI) remain the same
                                                 </div>

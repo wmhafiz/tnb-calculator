@@ -7,6 +7,7 @@ import { Badge } from './ui/badge';
 import { Receipt, Zap, Calculator, Sun } from 'lucide-react';
 import { useCalculatorStore, selectBreakdownData } from '../store/calculatorStore';
 import { useUrlState } from '../hooks/useUrlState';
+import tariffData from '../data/db.json';
 
 interface ChargeItem {
     charge: string;
@@ -47,12 +48,39 @@ export default function BillBreakdown() {
             const netUsage = usage - (inputs.enableSolar ? inputs.solarExcessKWh : 0);
 
             // Energy Charge (Generation Charge)
-            items.push({
-                charge: 'Energy Charge',
-                rate: '27.03',
-                calculation: `27.03 sen/kWh × ${usage}.00 kWh`,
-                amount: breakdown.generationCharge
-            });
+            const { generalDomesticTariff, timeOfUseTariff } = tariffData.tnbTariffRates;
+
+            if (inputs.enableToU) {
+                // ToU rates - show weighted average or peak rate as representative
+                const peakRate = usage <= 1500
+                    ? timeOfUseTariff.energyChargeToURates.usageUpTo1500KWhPerMonth.peakRateSenPerKWh
+                    : timeOfUseTariff.energyChargeToURates.usageOver1500KWhPerMonth.peakRateSenPerKWh;
+                const offPeakRate = usage <= 1500
+                    ? timeOfUseTariff.energyChargeToURates.usageUpTo1500KWhPerMonth.offPeakRateSenPerKWh
+                    : timeOfUseTariff.energyChargeToURates.usageOver1500KWhPerMonth.offPeakRateSenPerKWh;
+
+                const peakPercentage = inputs.touPeakPercentage;
+                const offPeakPercentage = 100 - peakPercentage;
+
+                items.push({
+                    charge: 'Energy Charge',
+                    rate: `${peakRate.toFixed(2)} / ${offPeakRate.toFixed(2)}`,
+                    calculation: `${peakPercentage}% Peak (${peakRate.toFixed(2)} sen/kWh), ${offPeakPercentage}% Off-Peak (${offPeakRate.toFixed(2)} sen/kWh)`,
+                    amount: breakdown.generationCharge
+                });
+            } else {
+                // Regular tariff rates
+                const energyRateValue = usage <= 1500
+                    ? generalDomesticTariff.components.generationCharge.tier1.rateSenPerKWh
+                    : generalDomesticTariff.components.generationCharge.tier2.rateSenPerKWh;
+                const energyRate = energyRateValue.toFixed(2);
+                items.push({
+                    charge: 'Energy Charge',
+                    rate: energyRate,
+                    calculation: `${energyRate} sen/kWh × ${usage}.00 kWh`,
+                    amount: breakdown.generationCharge
+                });
+            }
 
             // AFA (if applicable)
             if (breakdown.automaticFuelAdjustment !== 0) {
@@ -72,25 +100,28 @@ export default function BillBreakdown() {
             }
 
             // Capacity Charge
+            const capacityRate = generalDomesticTariff.components.capacityCharge.rateSenPerKWh.toFixed(2);
             items.push({
                 charge: 'Capacity Charge',
-                rate: '4.55',
-                calculation: `4.55 sen/kWh × ${usage}.00 kWh`,
+                rate: capacityRate,
+                calculation: `${capacityRate} sen/kWh × ${usage}.00 kWh`,
                 amount: breakdown.capacityCharge
             });
 
             // Network Charge
+            const networkRate = generalDomesticTariff.components.networkCharge.rateSenPerKWh.toFixed(2);
             items.push({
                 charge: 'Network Charge',
-                rate: '12.85',
-                calculation: `12.85 sen/kWh × ${usage}.00 kWh`,
+                rate: networkRate,
+                calculation: `${networkRate} sen/kWh × ${usage}.00 kWh`,
                 amount: breakdown.networkCharge
             });
 
             // Retail Charge
+            const retailRate = generalDomesticTariff.components.retailCharge.monthlyFeeRM.toFixed(2);
             items.push({
                 charge: 'Retail Charge',
-                rate: '10.00',
+                rate: retailRate,
                 calculation: usage > 600 ? 'Fixed charge (usage > 600 kWh)' : 'Fixed charge (usage ≤ 600 kWh)',
                 amount: breakdown.retailCharge
             });
@@ -160,10 +191,34 @@ export default function BillBreakdown() {
             // SST
             if (breakdown.sst && breakdown.sst > 0) {
                 const taxableUsage = usage - 600;
+                let sstCalculation = '';
+
+                if (inputs.enableToU) {
+                    // For ToU, show the weighted average rate used in SST calculation
+                    const peakRate = usage <= 1500
+                        ? timeOfUseTariff.energyChargeToURates.usageUpTo1500KWhPerMonth.peakRateSenPerKWh
+                        : timeOfUseTariff.energyChargeToURates.usageOver1500KWhPerMonth.peakRateSenPerKWh;
+                    const offPeakRate = usage <= 1500
+                        ? timeOfUseTariff.energyChargeToURates.usageUpTo1500KWhPerMonth.offPeakRateSenPerKWh
+                        : timeOfUseTariff.energyChargeToURates.usageOver1500KWhPerMonth.offPeakRateSenPerKWh;
+
+                    const peakPercentage = inputs.touPeakPercentage;
+                    const weightedRate = (peakRate * peakPercentage + offPeakRate * (100 - peakPercentage)) / 100;
+
+                    sstCalculation = `8% × ${taxableUsage} kWh × ${weightedRate.toFixed(2)} sen/kWh (ToU weighted avg)`;
+                } else {
+                    // Regular tariff
+                    const sstRateValue = usage <= 1500
+                        ? generalDomesticTariff.components.generationCharge.tier1.rateSenPerKWh
+                        : generalDomesticTariff.components.generationCharge.tier2.rateSenPerKWh;
+                    const sstRate = sstRateValue.toFixed(2);
+                    sstCalculation = `8% × ${taxableUsage} kWh × ${sstRate} sen/kWh`;
+                }
+
                 items.push({
                     charge: 'SST (8%)',
                     rate: '8%',
-                    calculation: `8% × ${taxableUsage} kWh × 27.03 sen/kWh`,
+                    calculation: sstCalculation,
                     amount: breakdown.sst
                 });
             }
