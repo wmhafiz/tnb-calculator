@@ -326,11 +326,11 @@ export default function BillBreakdown() {
                 <div className="overflow-x-auto">
                     <Table>
                         <TableHeader>
-                            <TableRow className="bg-blue-50">
-                                <TableHead className="font-semibold text-blue-900">Charge</TableHead>
-                                <TableHead className="font-semibold text-blue-900 text-center">Rate</TableHead>
-                                <TableHead className="font-semibold text-blue-900 text-center">Calculation</TableHead>
-                                <TableHead className="font-semibold text-blue-900 text-right">Amount</TableHead>
+                            <TableRow className="bg-blue-50 dark:bg-blue-950/30">
+                                <TableHead className="font-semibold text-blue-900 dark:text-blue-100">Charge</TableHead>
+                                <TableHead className="font-semibold text-blue-900 dark:text-blue-100 text-center">Rate</TableHead>
+                                <TableHead className="font-semibold text-blue-900 dark:text-blue-100 text-center">Calculation</TableHead>
+                                <TableHead className="font-semibold text-blue-900 dark:text-blue-100 text-right">Amount</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -339,18 +339,18 @@ export default function BillBreakdown() {
                                     key={index}
                                     className={
                                         item.isTotal
-                                            ? "bg-blue-600 text-white font-bold"
+                                            ? "bg-blue-600 dark:bg-blue-700 text-white font-bold"
                                             : item.isSubtotal
-                                                ? "bg-blue-100 font-semibold"
+                                                ? "bg-blue-100 dark:bg-blue-950/50 font-semibold"
                                                 : item.isRebate
-                                                    ? "bg-green-50"
-                                                    : "hover:bg-gray-50"
+                                                    ? "bg-green-50 dark:bg-green-950/30"
+                                                    : "hover:bg-muted/50"
                                     }
                                 >
                                     <TableCell className={`font-medium ${item.isTotal ? 'text-white' : ''}`}>
                                         {item.charge}
                                         {item.isRebate && (
-                                            <Badge variant="outline" className="ml-2 text-green-600 border-green-600">
+                                            <Badge variant="outline" className="ml-2 text-green-600 dark:text-green-400 border-green-600 dark:border-green-400">
                                                 Rebate
                                             </Badge>
                                         )}
@@ -365,7 +365,7 @@ export default function BillBreakdown() {
                                         {item.isTotal ? (
                                             <span className="text-lg font-bold">RM {formatCurrency(item.amount)}</span>
                                         ) : (
-                                            <span className={item.isRebate ? 'text-green-600' : ''}>
+                                            <span className={item.isRebate ? 'text-green-600 dark:text-green-400' : ''}>
                                                 {item.isRebate ? '-' : ''}
                                                 {item.amount === 0 ? '0.00' : formatCurrency(Math.abs(item.amount))}
                                             </span>
@@ -378,15 +378,15 @@ export default function BillBreakdown() {
                 </div>
 
                 {/* Additional Information */}
-                <div className="p-4 bg-gray-50 border-t">
+                <div className="p-4 bg-muted border-t">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                         <div className="flex items-center gap-2">
-                            <Zap className="h-4 w-4 text-blue-600" />
+                            <Zap className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                             <span className="font-medium">Usage:</span>
                             <span>{inputs.monthlyUsageKWh} kWh</span>
                         </div>
                         <div className="flex items-center gap-2">
-                            <Calculator className="h-4 w-4 text-blue-600" />
+                            <Calculator className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                             <span className="font-medium">Tariff:</span>
                             <Badge variant={inputs.tariffType === 'new' ? 'default' : 'secondary'}>
                                 {inputs.tariffType === 'new' ? 'New General Domestic' : 'Old Tariff'}
@@ -394,9 +394,9 @@ export default function BillBreakdown() {
                         </div>
                         {inputs.enableSolar && inputs.solarExcessKWh > 0 && (
                             <div className="flex items-center gap-2">
-                                <Sun className="h-4 w-4 text-green-600" />
+                                <Sun className="h-4 w-4 text-green-600 dark:text-green-400" />
                                 <span className="font-medium">Solar:</span>
-                                <Badge variant="outline" className="text-green-600 border-green-600">
+                                <Badge variant="outline" className="text-green-600 dark:text-green-400 border-green-600 dark:border-green-400">
                                     {inputs.solarExcessKWh} kWh excess
                                 </Badge>
                             </div>

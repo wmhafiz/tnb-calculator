@@ -15,6 +15,7 @@ import { useCalculatorStore, calculatorSelectors } from '../store/calculatorStor
 import { useUrlState } from '../hooks/useUrlState';
 import tariffData from '../data/db.json';
 import BillBreakdown from './BillBreakdown';
+import { ThemeToggle } from './ui/theme-toggle';
 
 export default function TnbCalculator() {
     // Use URL state for inputs
@@ -58,12 +59,15 @@ export default function TnbCalculator() {
 
     return (
         <div className="max-w-6xl mx-auto p-6 space-y-6">
-            <div className="text-center space-y-2">
+            <div className="text-center space-y-2 relative">
+                <div className="absolute top-0 right-0">
+                    <ThemeToggle />
+                </div>
                 <h1 className="text-3xl font-bold flex items-center justify-center gap-2">
-                    <Calculator className="h-8 w-8 text-blue-600" />
+                    <Calculator className="h-8 w-8 text-blue-600 dark:text-blue-400" />
                     TNB Electricity Bill Calculator
                 </h1>
-                <p className="text-gray-600">
+                <p className="text-muted-foreground">
                     Compare tariffs and estimate your electricity bill for Peninsular Malaysia
                 </p>
             </div>
@@ -114,15 +118,16 @@ export default function TnbCalculator() {
 
                         {/* Time of Use Option */}
                         {inputs.tariffType === 'new' && (
-                            <div className="space-y-4 p-4 border rounded-lg bg-blue-50">
+                            <div className="space-y-4 p-4 border rounded-lg bg-blue-50 dark:bg-blue-950/30">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
-                                        <Clock className="h-4 w-4 text-blue-600" />
+                                        <Clock className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                                         <Label htmlFor="tou-toggle">Enable Time of Use (ToU)</Label>
                                     </div>
                                     <Switch
                                         id="tou-toggle"
                                         checked={inputs.enableToU}
+                                        disabled={inputs.monthlyUsageKWh > 1500}
                                         onCheckedChange={(checked) => setEnableToU(checked)}
                                     />
                                 </div>
@@ -147,7 +152,7 @@ export default function TnbCalculator() {
                                                 step={5}
                                                 className="w-full"
                                             />
-                                            <div className="flex justify-between text-sm text-gray-600">
+                                            <div className="flex justify-between text-sm text-muted-foreground">
                                                 <span>Peak: {inputs.touPeakPercentage}%</span>
                                                 <span>Off-Peak: {100 - inputs.touPeakPercentage}%</span>
                                             </div>
@@ -158,10 +163,10 @@ export default function TnbCalculator() {
                         )}
 
                         {/* Solar Integration */}
-                        <div className="space-y-4 p-4 border rounded-lg bg-green-50">
+                        <div className="space-y-4 p-4 border rounded-lg bg-green-50 dark:bg-green-950/30">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                    <Sun className="h-4 w-4 text-green-600" />
+                                    <Sun className="h-4 w-4 text-green-600 dark:text-green-400" />
                                     <Label htmlFor="solar-toggle">Enable Solar Integration</Label>
                                 </div>
                                 <Switch
@@ -184,7 +189,7 @@ export default function TnbCalculator() {
                                         step="1"
                                     />
                                     {inputs.tariffType === 'old' && (
-                                        <p className="text-xs text-gray-600">
+                                        <p className="text-xs text-muted-foreground">
                                             Solar offset will be calculated using the same block rates as your consumption.
                                         </p>
                                     )}
@@ -194,9 +199,9 @@ export default function TnbCalculator() {
 
                         {/* AFA Adjustment - Only for New Tariff */}
                         {inputs.tariffType === 'new' && (
-                            <div className="space-y-4 p-4 border rounded-lg bg-orange-50">
+                            <div className="space-y-4 p-4 border rounded-lg bg-orange-50 dark:bg-orange-950/30">
                                 <div className="flex items-center gap-2">
-                                    <Zap className="h-4 w-4 text-orange-600" />
+                                    <Zap className="h-4 w-4 text-orange-600 dark:text-orange-400" />
                                     <Label>Automatic Fuel Adjustment (AFA): {inputs.afaSenPerKWh > 0 ? '+' : ''}{inputs.afaSenPerKWh.toFixed(1)} sen/kWh</Label>
                                 </div>
 
@@ -209,7 +214,7 @@ export default function TnbCalculator() {
                                         step={0.1}
                                         className="w-full"
                                     />
-                                    <div className="flex justify-between text-xs text-gray-600">
+                                    <div className="flex justify-between text-xs text-muted-foreground">
                                         <span>-3.0</span>
                                         <span>-2.0</span>
                                         <span>-1.0</span>
@@ -242,7 +247,7 @@ export default function TnbCalculator() {
                         </Alert>
                     )}
                     {isCalculating ? (
-                        <div className="text-center py-12 text-gray-500">
+                        <div className="text-center py-12 text-muted-foreground">
                             <Calculator className="h-12 w-12 mx-auto mb-4 opacity-50 animate-spin" />
                             <p>Calculating...</p>
                         </div>
@@ -252,15 +257,15 @@ export default function TnbCalculator() {
 
                             {/* ToU Comparison */}
                             {result.touComparison && (
-                                <div className="p-4 border rounded-lg bg-blue-50">
+                                <div className="p-4 border rounded-lg bg-blue-50 dark:bg-blue-950/30">
                                     <h4 className="font-semibold mb-2">Time of Use Comparison</h4>
                                     <div className="grid grid-cols-2 gap-4 text-sm">
                                         <div>
-                                            <div className="text-gray-600">General Tariff</div>
+                                            <div className="text-muted-foreground">General Tariff</div>
                                             <div className="font-semibold">{formatCurrency(result.touComparison.generalTariffAmount)}</div>
                                         </div>
                                         <div>
-                                            <div className="text-gray-600">ToU Tariff</div>
+                                            <div className="text-muted-foreground">ToU Tariff</div>
                                             <div className="font-semibold">{formatCurrency(result.touComparison.touAmount)}</div>
                                         </div>
                                     </div>
@@ -268,10 +273,10 @@ export default function TnbCalculator() {
                                         <div className="flex justify-between items-center">
                                             <span className="text-sm">Potential Savings:</span>
                                             <div className="text-right">
-                                                <div className={`font-semibold ${result.touComparison.savings > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                <div className={`font-semibold ${result.touComparison.savings > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                                                     {result.touComparison.savings > 0 ? '-' : '+'}{formatCurrency(Math.abs(result.touComparison.savings))}
                                                 </div>
-                                                <div className={`text-xs ${result.touComparison.savings > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                <div className={`text-xs ${result.touComparison.savings > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                                                     {formatPercentage(result.touComparison.savingsPercentage)}
                                                 </div>
                                             </div>
@@ -282,7 +287,7 @@ export default function TnbCalculator() {
 
                         </div>
                     ) : (
-                        <div className="text-center py-12 text-gray-500">
+                        <div className="text-center py-12 text-muted-foreground">
                             <Calculator className="h-12 w-12 mx-auto mb-4 opacity-50" />
                             <p>Enter your monthly kWh usage to see the calculation</p>
                         </div>
@@ -308,7 +313,7 @@ export default function TnbCalculator() {
                             </TabsList>
 
                             <TabsContent value="breakdown" className="space-y-4">
-                                <div className="bg-gray-50 p-4 rounded-lg">
+                                <div className="bg-muted p-4 rounded-lg">
                                     <pre className="text-sm font-mono whitespace-pre-wrap">
                                         {result.detailedCalculation.join('\n')}
                                     </pre>
@@ -343,15 +348,15 @@ export default function TnbCalculator() {
                                                 <div><strong>Capacity Charge:</strong> 4.55 sen/kWh</div>
                                                 <div><strong>Network Charge:</strong> 12.85 sen/kWh</div>
                                                 <div><strong>Retail Charge:</strong> RM 10.00/month</div>
-                                                <div className="text-xs text-gray-600">(Waived if usage ≤ 600 kWh)</div>
+                                                <div className="text-xs text-muted-foreground">(Waived if usage ≤ 600 kWh)</div>
                                                 <div><strong>EEI Rebate:</strong> Tiered rates</div>
-                                                <div className="text-xs text-gray-600">(1-200 kWh: 25 sen/kWh, decreasing by tier up to 1000 kWh)</div>
+                                                <div className="text-xs text-muted-foreground">(1-200 kWh: 25 sen/kWh, decreasing by tier up to 1000 kWh)</div>
                                             </div>
                                         </div>
                                     )}
 
                                     {inputs.tariffType === 'new' && (
-                                        <div className="p-4 border rounded-lg bg-green-50">
+                                        <div className="p-4 border rounded-lg bg-green-50 dark:bg-green-950/30">
                                             <h4 className="font-semibold mb-2">Energy Efficiency Incentive (EEI) Tiers</h4>
                                             <div className="space-y-1 text-xs">
                                                 <div className="grid grid-cols-2 gap-2">
@@ -369,7 +374,7 @@ export default function TnbCalculator() {
                                     )}
 
                                     {inputs.enableToU && (
-                                        <div className="p-4 border rounded-lg bg-blue-50">
+                                        <div className="p-4 border rounded-lg bg-blue-50 dark:bg-blue-950/30">
                                             <h4 className="font-semibold mb-2">Time of Use Rates</h4>
                                             <div className="space-y-1 text-sm">
                                                 <div><strong>Peak Hours (2PM-10PM, Weekdays):</strong></div>
@@ -378,7 +383,7 @@ export default function TnbCalculator() {
                                                 <div><strong>Off-Peak Hours:</strong></div>
                                                 <div>• 0-1500 kWh: 24.43 sen/kWh</div>
                                                 <div>• &gt;1500 kWh: 34.43 sen/kWh</div>
-                                                <div className="text-xs text-gray-600 mt-2">
+                                                <div className="text-xs text-muted-foreground mt-2">
                                                     Other charges (Capacity, Network, Retail, EEI) remain the same
                                                 </div>
                                             </div>
