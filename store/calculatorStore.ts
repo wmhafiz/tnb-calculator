@@ -266,42 +266,29 @@ function calculateNewGeneralTariff(
         breakdown.push(`Peak Usage (${touPeakPercentage}%): ${peakUsage} kWh`);
         breakdown.push(`Off-Peak Usage (${100 - touPeakPercentage}%): ${offPeakUsage} kWh`);
 
-        // Peak charges
+        // ToU uses flat rate based on total usage, not tiered structure
         if (usageKWh <= 1500) {
-            const peakCharge = peakUsage * timeOfUseTariff.energyChargeToURates.usageUpTo1500KWhPerMonth.peakRateSenPerKWh / 100;
-            generationCharge += peakCharge;
-            breakdown.push(`Peak charge: ${peakUsage} kWh × ${timeOfUseTariff.energyChargeToURates.usageUpTo1500KWhPerMonth.peakRateSenPerKWh} sen/kWh = RM ${peakCharge.toFixed(2)}`);
+            // Use ≤1500 kWh rates for entire usage
+            const peakRate = timeOfUseTariff.energyChargeToURates.usageUpTo1500KWhPerMonth.peakRateSenPerKWh;
+            const offPeakRate = timeOfUseTariff.energyChargeToURates.usageUpTo1500KWhPerMonth.offPeakRateSenPerKWh;
+
+            const peakCharge = peakUsage * peakRate / 100;
+            const offPeakCharge = offPeakUsage * offPeakRate / 100;
+
+            generationCharge = peakCharge + offPeakCharge;
+            breakdown.push(`Peak charge: ${peakUsage} kWh × ${peakRate} sen/kWh = RM ${peakCharge.toFixed(2)}`);
+            breakdown.push(`Off-peak charge: ${offPeakUsage} kWh × ${offPeakRate} sen/kWh = RM ${offPeakCharge.toFixed(2)}`);
         } else {
-            const tier1PeakUsage = Math.min(peakUsage, 1500);
-            const tier2PeakUsage = Math.max(0, peakUsage - 1500);
+            // Use >1500 kWh rates for entire usage
+            const peakRate = timeOfUseTariff.energyChargeToURates.usageOver1500KWhPerMonth.peakRateSenPerKWh;
+            const offPeakRate = timeOfUseTariff.energyChargeToURates.usageOver1500KWhPerMonth.offPeakRateSenPerKWh;
 
-            const tier1PeakCharge = tier1PeakUsage * timeOfUseTariff.energyChargeToURates.usageUpTo1500KWhPerMonth.peakRateSenPerKWh / 100;
-            const tier2PeakCharge = tier2PeakUsage * timeOfUseTariff.energyChargeToURates.usageOver1500KWhPerMonth.peakRateSenPerKWh / 100;
+            const peakCharge = peakUsage * peakRate / 100;
+            const offPeakCharge = offPeakUsage * offPeakRate / 100;
 
-            generationCharge += tier1PeakCharge + tier2PeakCharge;
-            breakdown.push(`Peak charge (Tier 1): ${tier1PeakUsage} kWh × ${timeOfUseTariff.energyChargeToURates.usageUpTo1500KWhPerMonth.peakRateSenPerKWh} sen/kWh = RM ${tier1PeakCharge.toFixed(2)}`);
-            if (tier2PeakUsage > 0) {
-                breakdown.push(`Peak charge (Tier 2): ${tier2PeakUsage} kWh × ${timeOfUseTariff.energyChargeToURates.usageOver1500KWhPerMonth.peakRateSenPerKWh} sen/kWh = RM ${tier2PeakCharge.toFixed(2)}`);
-            }
-        }
-
-        // Off-peak charges
-        if (usageKWh <= 1500) {
-            const offPeakCharge = offPeakUsage * timeOfUseTariff.energyChargeToURates.usageUpTo1500KWhPerMonth.offPeakRateSenPerKWh / 100;
-            generationCharge += offPeakCharge;
-            breakdown.push(`Off-peak charge: ${offPeakUsage} kWh × ${timeOfUseTariff.energyChargeToURates.usageUpTo1500KWhPerMonth.offPeakRateSenPerKWh} sen/kWh = RM ${offPeakCharge.toFixed(2)}`);
-        } else {
-            const tier1OffPeakUsage = Math.min(offPeakUsage, Math.max(0, 1500 - peakUsage));
-            const tier2OffPeakUsage = Math.max(0, offPeakUsage - tier1OffPeakUsage);
-
-            const tier1OffPeakCharge = tier1OffPeakUsage * timeOfUseTariff.energyChargeToURates.usageUpTo1500KWhPerMonth.offPeakRateSenPerKWh / 100;
-            const tier2OffPeakCharge = tier2OffPeakUsage * timeOfUseTariff.energyChargeToURates.usageOver1500KWhPerMonth.offPeakRateSenPerKWh / 100;
-
-            generationCharge += tier1OffPeakCharge + tier2OffPeakCharge;
-            breakdown.push(`Off-peak charge (Tier 1): ${tier1OffPeakUsage} kWh × ${timeOfUseTariff.energyChargeToURates.usageUpTo1500KWhPerMonth.offPeakRateSenPerKWh} sen/kWh = RM ${tier1OffPeakCharge.toFixed(2)}`);
-            if (tier2OffPeakUsage > 0) {
-                breakdown.push(`Off-peak charge (Tier 2): ${tier2OffPeakUsage} kWh × ${timeOfUseTariff.energyChargeToURates.usageOver1500KWhPerMonth.offPeakRateSenPerKWh} sen/kWh = RM ${tier2OffPeakCharge.toFixed(2)}`);
-            }
+            generationCharge = peakCharge + offPeakCharge;
+            breakdown.push(`Peak charge: ${peakUsage} kWh × ${peakRate} sen/kWh = RM ${peakCharge.toFixed(2)}`);
+            breakdown.push(`Off-peak charge: ${offPeakUsage} kWh × ${offPeakRate} sen/kWh = RM ${offPeakCharge.toFixed(2)}`);
         }
     } else {
         breakdown.push(`GENERATION CHARGE:`);
